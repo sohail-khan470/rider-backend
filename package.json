@@ -1,0 +1,22 @@
+{
+  "name": "booking-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index"
+  },
+  "keywords": [],
+  "author": "sohail-sarwar-khan",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^4.19.2",
+    "http-status-codes": "^2.3.0",
+    "nodemon": "^3.1.9",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.6.0"
+  }
+}
