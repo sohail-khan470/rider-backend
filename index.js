@@ -1,13 +1,6 @@
-const express = require("express");
-const app = express();
-const apiRoutes = require("./src/routes");
-const { logger } = require("./src/config");
-
-const { serverConfig } = require("./src/config");
-const PORT = serverConfig.PORT;
-
-app.use("/api", apiRoutes);
-
+const app = require("./src/app");
+const { serverConfig, logger } = require("./src/config");
+const PORT = serverConfig.PORT || 3000;
 app.listen(PORT, () => {
-  logger.info(`successfully running on port ${PORT}`, "root", {});
+  logger.info(`successfully running on port ${PORT}`, "root");
 });

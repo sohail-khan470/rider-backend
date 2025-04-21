@@ -1,26 +1,70 @@
-This project is based on repository pattern similar to nestjs but i have used sequelize with 
-express.
-I have use Plain javascript without typescript with good folder structures but it is flexible
-and can be modified as needed.
+# Booking App
 
-`src`  All the code of out project resides inside this directory. (if you want to write tests 
-then create seperate test folder in root directory) .
+## Project Overview
 
-`config` All the necessary configuration required for app is present there .
-i-e: `loggerConfig` it is used for logging using winston package
+This is a Booking App backend service built with Node.js and Express. It provides authentication and booking management functionalities. The project uses Prisma as an ORM for database interactions and Winston for logging. Environment variables are managed using dotenv.
 
-`utils ` This folder include some common modules required throughout the application development also some helper modules errors etc
+## Folder Structure
 
-`controllers` This folder is will communicate with services to get business logic.
+```
+.
+├── index.js                  # Application entry point, starts the server
+├── package.json             # Project metadata and dependencies
+├── prisma/                  # Prisma schema and migration files
+│   └── schema.prisma        # Prisma schema definition
+├── src/                     # Source code
+│   ├── app.js               # Express app setup and route registration
+│   ├── auth/                # Authentication module
+│   │   ├── auth-controller.js  # Handles auth request logic
+│   │   ├── auth-service.js     # Business logic for authentication
+│   │   ├── auth-routes.js      # Express routes for auth endpoints
+│   │   └── index.js            # Exports auth module components
+│   ├── bookings/            # Booking module
+│   │   ├── booking-controller.js  # Handles booking request logic
+│   │   ├── booking-routes.js      # Express routes for booking endpoints
+│   │   └── index.js              # Exports booking module components
+│   ├── config/              # Configuration files
+│   │   ├── index.js         # Exports config modules
+│   │   ├── logger-config.js # Winston logger configuration
+│   │   ├── server-config.js # Server configuration (e.g., port)
+│   │   └── logs/            # Log files directory
+│   ├── shared/              # Shared utilities and helpers
+│   │   └── index.js         # Exports shared utilities
+│
+## Installation
 
-`Routes` This folder is for storing the routes of the application 
-    inside the application `V1` directory is used for versioning the api 
-`Middlewares` This directory can be used to write and store different middlewares `i-e` Auth.
+1. Clone the repository:
+```
 
-`Models` This directory stores the models which can represent the schema  of the resources
+```
+2. Install dependencies:
+```
 
-`services` The service is the place where we write business logic and the will communicates 
-with `repositories`
+npm install
 
-`repositories` Repositories will directly communicates with database using sequelize ORM
+```
+3. Set up environment variables:
+Create a `.env` file in the root directory and define necessary variables such as `PORT`.
 
+4. Run the development server:
+```
+
+npm run dev
+
+```
+
+## Usage
+
+- The server starts on the port defined in environment variables or defaults to 3000.
+- Authentication routes are available under `/api/auth` (e.g., POST `/api/auth/login`).
+- Booking routes are expected to be available (though not registered in the main app file currently).
+
+## Dependencies
+
+- express: Web framework
+- dotenv: Environment variable management
+- http-status-codes: HTTP status code constants
+- nodemon: Development server auto-restart
+- winston: Logging
+- prisma: ORM for database
+```
