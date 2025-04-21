@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a Booking App backend service built with Node.js and Express. It provides authentication and booking management functionalities. The project uses Prisma as an ORM for database interactions and Winston for logging. Environment variables are managed using dotenv.
+This is a Rider Booking App backend service built with Node.js and Express. It provides booking management functionalities. The project uses Prisma as an ORM for database interactions and Winston for logging. Environment variables are managed using dotenv.
 
 ## Folder Structure
 
