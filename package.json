@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index"
+    "dev": "nodemon index",
+    "start": "node index"
   },
   "keywords": [],
-  "author": "sohail-sarwar-khan",
+  "author": "Bluell-inc",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.5.0",
