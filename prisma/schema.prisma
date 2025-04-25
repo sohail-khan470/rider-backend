@@ -1,14 +1,127 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model SuperAdmin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("super_admin")
+}
+
+model Company {
+  id         Int      @id @default(autoincrement())
+  name       String
+  email      String   @unique
+  password   String
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  admin     CompanyAdmin?
+  bookings  Booking[]
+  drivers   Driver[]
+  staff     Staff[]
+  customers Customer[]
+
+  @@map("company")
+}
+
+model CompanyAdmin {
+  id        Int     @id @default(autoincrement())
+  name      String
+  email     String  @unique
+  password  String
+  companyId Int     @unique
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_admin")
+}
+
+model StaffRole {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  staff Staff[]
+
+  @@map("staff_role")
+}
+
+model Staff {
+  id        Int    @id @default(autoincrement())
+  name      String
+  email     String @unique
+  password  String
+  roleId    Int
+  companyId Int
+
+  role    StaffRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  company Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("staff")
+}
+
+model Driver {
+  id          Int       @id @default(autoincrement())
+  name        String
+  email       String    @unique
+  phone       String
+  status      String    @default("offline")
+  vehicleInfo String
+  companyId   Int
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  location    Location?
+
+  bookings Booking[]
+
+  @@map("driver")
+}
+
+model Customer {
+  id        Int     @id @default(autoincrement())
+  name      String
+  email     String  @unique
+  phone     String
+  companyId Int
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  bookings Booking[]
+
+  @@map("customer")
+}
+
+model Booking {
+  id          Int      @id @default(autoincrement())
+  customerId  Int
+  driverId    Int?
+  companyId   Int
+  pickup      String
+  dropoff     String
+  status      String   @default("pending")
+  fare        Float?
+  requestedAt DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  driver   Driver?  @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("booking")
+}
+
+model Location {
+  id        Int      @id @default(autoincrement())
+  driverId  Int      @unique
+  lat       Float
+  lng       Float
+  updatedAt DateTime @updatedAt
+
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@map("location")
 }

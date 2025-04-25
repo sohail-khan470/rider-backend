@@ -1,3 +1,3 @@
 module.exports = {
-  authService: require("./user-auth"),
+  adminRoutes: require("./admin/admin-routes"),
 };
