@@ -1,13 +1,13 @@
 // src/services/bookingService.js
 const { PrismaClient } = require("@prisma/client");
 const { AppError } = require("../utils/errorUtils");
-const locationService = require("./locationService");
-
+const { locationService } = require("../location");
 const prisma = new PrismaClient();
 
 async function create(data) {
+  console.log("*********servuce");
   const customer = await prisma.customer.findUnique({
-    where: { id: data.customerId },
+    where: { id: Number(data.customerId) },
   });
 
   if (!customer) {
@@ -15,7 +15,7 @@ async function create(data) {
   }
 
   const company = await prisma.company.findUnique({
-    where: { id: data.companyId },
+    where: { id: Number(data.companyId) },
   });
 
   if (!company) {
@@ -24,7 +24,7 @@ async function create(data) {
 
   if (data.driverId) {
     const driver = await prisma.driver.findUnique({
-      where: { id: data.driverId },
+      where: { id: Number(data.driverId) },
     });
 
     if (!driver) {
@@ -58,8 +58,9 @@ async function create(data) {
 }
 
 async function getById(id) {
+  console.log("getById**********", id);
   const booking = await prisma.booking.findUnique({
-    where: { id },
+    where: { id: Number(id) },
     include: {
       customer: true,
       driver: {

@@ -1,6 +1,6 @@
 // src/controllers/companyController.js
 const { StatusCodes } = require("http-status-codes");
-const companyService = require("../services/companyService");
+const companyService = require("./company-service");
 const { AppError } = require("../utils/errorUtils");
 
 async function createCompany(req, res, next) {

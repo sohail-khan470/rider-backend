@@ -1,12 +1,22 @@
 // src/services/superAdminService.js
 const { PrismaClient } = require("@prisma/client");
-const { AppError } = require("../utils/errorUtils");
+// const {
+//   hashPassword,
+//   comparePassword,
+//   generateToken,
+// } = require("../../utils/passwordUtils");
+
+const { AppError } = require("../../utils/errorUtils");
+const {
+  validateEmail,
+  validatePhone,
+  validatePassword,
+} = require("../../utils/validationUtils");
 const {
   hashPassword,
   comparePassword,
   generateToken,
-} = require("../utils/passwordUtils");
-const { validateEmail, validatePassword } = require("../utils/validationUtils");
+} = require("../../utils/passwordUtils");
 
 const prisma = new PrismaClient();
 
@@ -65,7 +75,7 @@ async function login(email, password) {
 
 async function getById(id) {
   const superAdmin = await prisma.superAdmin.findUnique({
-    where: { id },
+    where: { id: Number(id) },
   });
 
   if (!superAdmin) {
@@ -91,7 +101,7 @@ async function update(id, data) {
   }
 
   return prisma.superAdmin.update({
-    where: { id },
+    where: { id: Number(id) },
     data,
   });
 }

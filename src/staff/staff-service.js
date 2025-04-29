@@ -106,7 +106,7 @@ async function login(email, password) {
 
 async function getById(id) {
   const staff = await prisma.staff.findUnique({
-    where: { id },
+    where: { id: Number(id) },
     include: {
       role: true,
       company: true,

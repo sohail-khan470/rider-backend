@@ -1,6 +1,6 @@
 // src/controllers/customerController.js
 const { StatusCodes } = require("http-status-codes");
-const customerService = require("../services/customerService");
+const customerService = require("./customer-service");
 const { AppError } = require("../utils/errorUtils");
 
 async function createCustomer(req, res, next) {

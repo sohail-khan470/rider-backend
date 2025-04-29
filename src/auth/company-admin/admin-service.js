@@ -1,12 +1,16 @@
 // src/services/companyAdminService.js
 const { PrismaClient } = require("@prisma/client");
-const { AppError } = require("../utils/errorUtils");
+
 const {
   hashPassword,
   comparePassword,
   generateToken,
-} = require("../utils/passwordUtils");
-const { validateEmail, validatePassword } = require("../utils/validationUtils");
+} = require("../../utils/passwordUtils");
+const { AppError } = require("../../utils/errorUtils");
+const {
+  validateEmail,
+  validatePassword,
+} = require("../../utils/validationUtils");
 
 const prisma = new PrismaClient();
 

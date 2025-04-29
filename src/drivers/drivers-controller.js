@@ -1,6 +1,6 @@
 // src/controllers/driverController.js
 const { StatusCodes } = require("http-status-codes");
-const driverService = require("../services/driverService");
+const driverService = require("./drivers-service");
 const { AppError } = require("../utils/errorUtils");
 
 async function createDriver(req, res, next) {

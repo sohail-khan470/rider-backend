@@ -1,6 +1,6 @@
 // src/controllers/locationController.js
 const { StatusCodes } = require("http-status-codes");
-const locationService = require("../services/locationService");
+const locationService = require("./location-service");
 const { AppError } = require("../utils/errorUtils");
 
 async function updateDriverLocation(req, res, next) {

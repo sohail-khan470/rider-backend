@@ -4,15 +4,14 @@ const cors = require("cors");
 
 //** Routes **/
 
-const superAdminRoutes = require("./src/auth/super-admin/super-admin-routes");
-const companyAdminRoutes = require("./src/auth/company-admin/admin-routes");
-const companyRoutes = require("./src/company/company-routes");
-const bookingRoutes = require("./src/bookings/booking-routes");
-const customerRoutes = require("./src/customer/customer-routes");
-const driverRoutes = require("./src/drivers/driver-routes");
-const locationRoutes = require("./src/location/location-routes");
-const staffRoutes = require("./src/staff/staff-routes");
-const rolesRoutes = require("./src/roles/roles-routes");
+// const rolesRoutes = require("./src/roles/roles-routes");
+const { superAdminRoutes, companyAdminRoutes } = require("./auth");
+const { companyRoutes } = require("./company");
+const { bookingRoutes } = require("./bookings");
+const { customerRoutes } = require("./customer");
+const { driverRoutes } = require("./drivers");
+const { locationRoutes } = require("./location");
+const { staffRoutes } = require("./staff");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -29,13 +28,12 @@ app.get("/", (req, res) => {
 /** Routes */
 app.use("/api/super-admin", superAdminRoutes);
 app.use("/api/company-admin", companyAdminRoutes);
-app.use("/api/companies", companyRoutes);
+app.use("/api/company", companyRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/drivers", driverRoutes);
 app.use("/api/location", locationRoutes);
 app.use("/api/staff", staffRoutes);
-app.use("/api/roles", rolesRoutes);
 
 /** 404 Handler - Route Not Found */
 app.use((req, res, next) => {

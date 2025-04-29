@@ -1,9 +1,11 @@
 // src/controllers/bookingController.js
 const { StatusCodes } = require("http-status-codes");
-const bookingService = require("../services/bookingService");
+const bookingService = require("./booking-service");
 const { AppError } = require("../utils/errorUtils");
 
 async function createBooking(req, res, next) {
+  console.log("create**********");
+
   try {
     const booking = await bookingService.create(req.body);
 
@@ -89,7 +91,7 @@ async function getBookingById(req, res, next) {
 
 async function listBookings(req, res, next) {
   try {
-    const { companyId } = req.params;
+    const { companyId } = req.query;
     const filters = req.query;
 
     const bookings = await bookingService.list(companyId, filters);
@@ -126,7 +128,8 @@ async function listBookings(req, res, next) {
 
 async function assignDriverToBooking(req, res, next) {
   try {
-    const { bookingId, driverId } = req.params;
+    // const { bookingId } = req.params;
+    const { bookingId } = req.body;
 
     const booking = await bookingService.assignDriver(bookingId, driverId);
 

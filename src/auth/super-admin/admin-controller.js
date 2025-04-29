@@ -1,7 +1,7 @@
 // src/controllers/superAdminController.js
 const { StatusCodes } = require("http-status-codes");
 const superAdminService = require("./admin-service");
-const { AppError } = require("../utils/errorUtils");
+const { AppError } = require("../../utils/errorUtils");
 
 async function createSuperAdmin(req, res, next) {
   try {

@@ -90,7 +90,7 @@ async function update(id, data) {
 
 async function updateStatus(id, status) {
   return prisma.driver.update({
-    where: { id },
+    where: { id: Number(id) },
     data: { status },
   });
 }

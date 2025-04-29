@@ -3,7 +3,7 @@ const router = express.Router();
 const superAdminController = require("./admin-controller");
 
 // Route to create a super admin
-router.post("/", superAdminController.createSuperAdmin);
+router.post("/register", superAdminController.createSuperAdmin);
 
 // Route to login a super admin
 router.post(

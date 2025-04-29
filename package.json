@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  
   "scripts": {
     "dev": "nodemon index",
-    "start": "node index"
+    "start": "node index",
+    "seed":"node seed.js"
   },
   "keywords": [],
   "author": "Bluell-inc",

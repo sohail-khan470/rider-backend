@@ -1,7 +1,7 @@
 // src/routes/companyRoutes.js
 const express = require("express");
 const router = express.Router();
-const companyController = require("./companyController");
+const companyController = require("./company-controller");
 
 // Company registration
 router.post("/register", companyController.createCompany);

@@ -1,8 +1,7 @@
 // src/controllers/staffController.js
 const { StatusCodes } = require("http-status-codes");
-const staffService = require("../services/staffService");
 const { AppError } = require("../utils/errorUtils");
-
+const staffService = require("./staff-service");
 async function createStaff(req, res, next) {
   try {
     const { name, email, password, roleId, companyId } = req.body;

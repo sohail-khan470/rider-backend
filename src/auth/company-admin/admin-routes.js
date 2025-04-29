@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const companyAdminController = require("./companyAdminController");
+const companyAdminController = require("./admin-controller");
 
 // Create a company admin
-router.post("/", companyAdminController.createCompanyAdmin);
+router.post("/register", companyAdminController.createCompanyAdmin);
 
 // Company admin login
 router.post("/login", companyAdminController.loginCompanyAdmin);

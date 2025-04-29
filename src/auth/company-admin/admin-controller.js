@@ -2,7 +2,7 @@
 const { StatusCodes } = require("http-status-codes");
 // const companyAdminService = require("../services/companyAdminService");
 const companyAdminService = require("./admin-service");
-const AppError = require("../utils/appError");
+const { AppError } = require("../../utils/errorUtils");
 
 async function createCompanyAdmin(req, res, next) {
   try {
