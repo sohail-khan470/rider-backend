@@ -1,12 +1,27 @@
 const express = require("express");
 const app = express();
-const { adminRoutes } = require("./auth");
+const cors = require("cors");
+const { superAdminRoutes, comapanyAdminRoutes } = require("./auth");
+const { bookingRoutes } = require("./bookings");
 
-// Middleware for parsing JSON
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
-/** Auth routes */
-app.use("/auth/admin", adminRoutes);
+/** Health Check */
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is running",
+  });
+});
+
+/** SuperAdmin Auth routes */
+app.use("/company/admin", adminRoutes);
+app.use("/auth/superadmin", superAdminRoutes);
+
+//booking routes
+app.use("/booking", bookingRoutes);
 
 /** 404 Handler - Route Not Found */
 app.use((req, res, next) => {

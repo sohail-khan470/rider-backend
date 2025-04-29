@@ -1,0 +1,61 @@
+// src/middlewares/authMiddleware.js
+const jwt = require("jsonwebtoken");
+const { StatusCodes } = require("http-status-codes");
+const AppError = require("../utils/appError");
+
+/**
+ * Middleware to authenticate company admins using JWT
+ */
+const authenticateCompanyAdmin = async (req, res, next) => {
+  try {
+    // Get token from authorization header
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new AppError(
+        "Unauthorized: No token provided",
+        StatusCodes.UNAUTHORIZED
+      );
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    if (!token) {
+      throw new AppError(
+        "Unauthorized: No token provided",
+        StatusCodes.UNAUTHORIZED
+      );
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Add user info to request
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      companyId: decoded.companyId,
+      role: "companyAdmin",
+    };
+
+    next();
+  } catch (error) {
+    if (error.name === "JsonWebTokenError") {
+      return next(
+        new AppError("Unauthorized: Invalid token", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    if (error.name === "TokenExpiredError") {
+      return next(
+        new AppError("Unauthorized: Token expired", StatusCodes.UNAUTHORIZED)
+      );
+    }
+
+    next(error);
+  }
+};
+
+module.exports = {
+  authenticateCompanyAdmin,
+};

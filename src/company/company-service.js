@@ -1,85 +1,171 @@
-const bcrypt = require("bcryptjs");
-const Joi = require("joi");
-const prisma = require("../prismaClient"); // Prisma Client
-const jwt = require("jsonwebtoken");
+// src/services/companyService.js
+const { PrismaClient } = require("@prisma/client");
+const { AppError } = require("../utils/errorUtils");
+const {
+  hashPassword,
+  comparePassword,
+  generateToken,
+} = require("../utils/passwordUtils");
+const { validateEmail, validatePassword } = require("../utils/validationUtils");
 
-// Joi schema for validating company input
-const companySchema = Joi.object({
-  name: Joi.string().min(3).max(255).required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-});
-const loginSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().required(),
-});
+const prisma = new PrismaClient();
 
-// Service for company registration
-const registerCompany = async (companyData) => {
-  // Validate the input
-  const { error } = companySchema.validate(companyData);
-  if (error) {
-    throw new Error(`Validation error: ${error.details[0].message}`);
+async function create(data) {
+  if (!validateEmail(data.email)) {
+    throw new AppError("Invalid email format", 400);
   }
 
-  // Check if the company already exists
+  if (!validatePassword(data.password)) {
+    throw new AppError(
+      "Password must be at least 8 characters with at least one letter and one number",
+      400
+    );
+  }
+
   const existingCompany = await prisma.company.findUnique({
-    where: {
-      email: companyData.email,
-    },
+    where: { email: data.email },
   });
+
   if (existingCompany) {
-    throw new Error("Company with this email already exists");
+    throw new AppError("Company with this email already exists", 400);
   }
 
-  // Hash the password
-  const hashedPassword = await bcrypt.hash(companyData.password, 10);
+  const hashedPassword = await hashPassword(data.password);
 
-  // Create the company record
-  const newCompany = await prisma.company.create({
+  return prisma.company.create({
     data: {
-      name: companyData.name,
-      email: companyData.email,
+      name: data.name,
+      email: data.email,
       password: hashedPassword,
+      timezone: data.timezone || "UTC",
+    },
+  });
+}
+
+async function login(email, password) {
+  const company = await prisma.company.findUnique({
+    where: { email },
+  });
+
+  if (!company) {
+    throw new AppError("Invalid credentials", 401);
+  }
+
+  if (!company.isApproved) {
+    throw new AppError("Company account is pending approval", 403);
+  }
+
+  const isPasswordValid = await comparePassword(password, company.password);
+
+  if (!isPasswordValid) {
+    throw new AppError("Invalid credentials", 401);
+  }
+
+  const token = generateToken({ id: company.id, role: "company" });
+
+  return {
+    token,
+    company: { id: company.id, name: company.name, email: company.email },
+  };
+}
+
+async function getById(id) {
+  const company = await prisma.company.findUnique({
+    where: { id },
+    include: {
+      admin: true,
+      drivers: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          status: true,
+        },
+      },
+      staff: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
+      customers: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
     },
   });
 
-  return newCompany;
-};
-
-const loginCompany = async (email, password) => {
-  // Validate input
-  const { error } = loginSchema.validate({ email, password });
-  if (error) {
-    throw new Error(`Validation error: ${error.details[0].message}`);
-  }
-
-  // Find company
-  const company = await prisma.company.findUnique({ where: { email } });
   if (!company) {
-    throw new Error("Invalid email or password");
+    throw new AppError("Company not found", 404);
   }
 
-  // Check password
-  const isMatch = await bcrypt.compare(password, company.password);
-  if (!isMatch) {
-    throw new Error("Invalid email or password");
+  return company;
+}
+
+async function update(id, data) {
+  if (data.email && !validateEmail(data.email)) {
+    throw new AppError("Invalid email format", 400);
   }
 
-  // Generate JWT
-  const token = jwt.sign(
-    {
-      id: company.id,
-      role: "company",
+  if (data.password) {
+    if (!validatePassword(data.password)) {
+      throw new AppError(
+        "Password must be at least 8 characters with at least one letter and one number",
+        400
+      );
+    }
+    data.password = await hashPassword(data.password);
+  }
+
+  return prisma.company.update({
+    where: { id },
+    data,
+  });
+}
+
+async function list(filters = {}) {
+  const where = {};
+  if (filters.isApproved !== undefined) {
+    where.isApproved = filters.isApproved;
+  }
+
+  return prisma.company.findMany({
+    where,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isApproved: true,
+      createdAt: true,
+      timezone: true,
     },
-    process.env.JWT_SECRET || "secret123",
-    { expiresIn: "7d" }
-  );
+  });
+}
 
-  return { token, company };
-};
+async function approveCompany(id) {
+  return prisma.company.update({
+    where: { id },
+    data: { isApproved: true },
+  });
+}
+
+async function deleteCompany(id) {
+  return prisma.company.delete({
+    where: { id },
+  });
+}
 
 module.exports = {
-  registerCompany,
-  loginCompany,
+  create,
+  login,
+  getById,
+  update,
+  list,
+  approveCompany,
+  delete: deleteCompany,
 };

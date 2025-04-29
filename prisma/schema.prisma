@@ -24,6 +24,7 @@ model Company {
   password   String
   isApproved Boolean  @default(false)
   createdAt  DateTime @default(now())
+  timezone   String   @default("UTC")
 
   admin     CompanyAdmin?
   bookings  Booking[]
@@ -64,23 +65,41 @@ model Staff {
   role    StaffRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
   company Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("staff")
 }
 
 model Driver {
-  id          Int       @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   name        String
-  email       String    @unique
+  email       String       @unique
   phone       String
-  status      String    @default("offline")
+  status      DriverStatus @default(offline)
   vehicleInfo String
   companyId   Int
-  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   location    Location?
 
   bookings Booking[]
 
+  availability DriverAvailability[]
+
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+
   @@map("driver")
+}
+
+model DriverAvailability {
+  id        Int      @id @default(autoincrement())
+  driverId  Int
+  startTime DateTime
+  endTime   DateTime
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@map("driver_availability")
 }
 
 model Customer {
@@ -93,19 +112,22 @@ model Customer {
 
   bookings Booking[]
 
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+
   @@map("customer")
 }
 
 model Booking {
-  id          Int      @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   customerId  Int
   driverId    Int?
   companyId   Int
   pickup      String
   dropoff     String
-  status      String   @default("pending")
+  status      BookingStatus @default(pending)
   fare        Float?
-  requestedAt DateTime @default(now())
+  requestedAt DateTime      @default(now())
 
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   driver   Driver?  @relation(fields: [driverId], references: [id], onDelete: SetNull)
@@ -124,4 +146,18 @@ model Location {
   driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
 
   @@map("location")
+}
+
+enum BookingStatus {
+  pending
+  accepted
+  ongoing
+  completed
+  cancelled
+}
+
+enum DriverStatus {
+  offline
+  online
+  on_trip
 }
