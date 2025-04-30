@@ -117,10 +117,21 @@ async function deleteCustomer(id) {
   });
 }
 
+async function getAllCustomers() {
+  const customers = await prisma.customer.findMany({
+    include: {
+      company: true,
+    },
+  });
+
+  return customers;
+}
+
 module.exports = {
   create,
   getById,
   list,
   update,
   delete: deleteCustomer,
+  getAllCustomers,
 };

@@ -17,6 +17,20 @@ async function createDriver(req, res, next) {
   }
 }
 
+async function listAllDrivers(req, res, next) {
+  try {
+    const drivers = await driverService.listAll();
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "All drivers retrieved successfully",
+      data: drivers,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function getDriverById(req, res, next) {
   try {
     const { id } = req.params;
@@ -182,4 +196,5 @@ module.exports = {
   addDriverAvailability,
   removeDriverAvailability,
   findAvailableDrivers,
+  listAllDrivers,
 };

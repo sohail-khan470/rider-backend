@@ -6,6 +6,9 @@ const driverController = require("./drivers-controller");
 // Create a driver
 router.post("/register", driverController.createDriver);
 
+// List all drivers
+router.get("/getAll", driverController.listAllDrivers);
+
 // Get a driver by ID
 router.get("/:id", driverController.getDriverById);
 

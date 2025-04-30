@@ -5,6 +5,10 @@ const { validateEmail, validatePhone } = require("../utils/validationUtils");
 
 const prisma = new PrismaClient();
 
+async function listAll() {
+  return prisma.driver.findMany();
+}
+
 async function create(data) {
   if (!validateEmail(data.email)) {
     throw new AppError("Invalid email format", 400);
@@ -164,4 +168,5 @@ module.exports = {
   addAvailability,
   removeAvailability,
   findAvailableDrivers,
+  listAll,
 };

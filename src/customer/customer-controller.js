@@ -82,10 +82,26 @@ async function deleteCustomer(req, res, next) {
   }
 }
 
+async function getAllCustomers(req, res, next) {
+  console.log("Fetching all customers...");
+  try {
+    const customers = await customerService.getAllCustomers();
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Customers retrieved successfully",
+      data: customers,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createCustomer,
   getCustomerById,
   listCustomers,
   updateCustomer,
   deleteCustomer,
+  getAllCustomers,
 };
