@@ -1,171 +1,254 @@
-// src/services/companyService.js
 const { PrismaClient } = require("@prisma/client");
-const { AppError } = require("../utils/errorUtils");
-const {
-  hashPassword,
-  comparePassword,
-  generateToken,
-} = require("../utils/passwordUtils");
-const { validateEmail, validatePassword } = require("../utils/validationUtils");
-
+const bcrypt = require("bcrypt");
+const { z } = require("zod");
 const prisma = new PrismaClient();
 
-async function create(data) {
-  if (!validateEmail(data.email)) {
-    throw new AppError("Invalid email format", 400);
-  }
+// Validation schemas
+const createCompanySchema = z.object({
+  name: z.string().min(2, "Company name must be at least 2 characters"),
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  timezone: z.string().optional().default("UTC"),
+});
 
-  if (!validatePassword(data.password)) {
-    throw new AppError(
-      "Password must be at least 8 characters with at least one letter and one number",
-      400
-    );
-  }
+const updateCompanySchema = z.object({
+  name: z
+    .string()
+    .min(2, "Company name must be at least 2 characters")
+    .optional(),
+  email: z.string().email("Invalid email format").optional(),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .optional(),
+  isApproved: z.boolean().optional(),
+  timezone: z.string().optional(),
+});
 
-  const existingCompany = await prisma.company.findUnique({
-    where: { email: data.email },
-  });
+class CompanyService {
+  async create(data) {
+    try {
+      // Validate input data
+      const validatedData = createCompanySchema.parse(data);
 
-  if (existingCompany) {
-    throw new AppError("Company with this email already exists", 400);
-  }
+      // Check if company with email already exists
+      const existingCompany = await prisma.company.findUnique({
+        where: { email: validatedData.email },
+      });
 
-  const hashedPassword = await hashPassword(data.password);
+      if (existingCompany) {
+        throw new Error("Company with this email already exists");
+      }
 
-  return prisma.company.create({
-    data: {
-      name: data.name,
-      email: data.email,
-      password: hashedPassword,
-      timezone: data.timezone || "UTC",
-    },
-  });
-}
+      // Hash password
+      const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
-async function login(email, password) {
-  const company = await prisma.company.findUnique({
-    where: { email },
-  });
-
-  if (!company) {
-    throw new AppError("Invalid credentials", 401);
-  }
-
-  if (!company.isApproved) {
-    throw new AppError("Company account is pending approval", 403);
-  }
-
-  const isPasswordValid = await comparePassword(password, company.password);
-
-  if (!isPasswordValid) {
-    throw new AppError("Invalid credentials", 401);
-  }
-
-  const token = generateToken({ id: company.id, role: "company" });
-
-  return {
-    token,
-    company: { id: company.id, name: company.name, email: company.email },
-  };
-}
-
-async function getById(id) {
-  const company = await prisma.company.findUnique({
-    where: { id },
-    include: {
-      admin: true,
-      drivers: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          status: true,
+      // Create company
+      const company = await prisma.company.create({
+        data: {
+          ...validatedData,
+          password: hashedPassword,
         },
-      },
-      staff: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-        },
-      },
-      customers: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-    },
-  });
+      });
 
-  if (!company) {
-    throw new AppError("Company not found", 404);
-  }
-
-  return company;
-}
-
-async function update(id, data) {
-  if (data.email && !validateEmail(data.email)) {
-    throw new AppError("Invalid email format", 400);
-  }
-
-  if (data.password) {
-    if (!validatePassword(data.password)) {
-      throw new AppError(
-        "Password must be at least 8 characters with at least one letter and one number",
-        400
-      );
+      // Remove password from response
+      const { password, ...companyWithoutPassword } = company;
+      return companyWithoutPassword;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(
+          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
+        );
+      }
+      throw error;
     }
-    data.password = await hashPassword(data.password);
   }
 
-  return prisma.company.update({
-    where: { id },
-    data,
-  });
-}
+  async findAll(filters = {}, pagination = { skip: 0, take: 10 }) {
+    const companies = await prisma.company.findMany({
+      where: filters,
+      skip: pagination.skip,
+      take: pagination.take,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isApproved: true,
+        createdAt: true,
+        timezone: true,
+        _count: {
+          select: {
+            drivers: true,
+            customers: true,
+            users: true,
+            bookings: true,
+          },
+        },
+      },
+    });
 
-async function list(filters = {}) {
-  const where = {};
-  if (filters.isApproved !== undefined) {
-    where.isApproved = filters.isApproved;
+    const total = await prisma.company.count({ where: filters });
+
+    return {
+      data: companies,
+      pagination: {
+        total,
+        page: Math.floor(pagination.skip / pagination.take) + 1,
+        pageSize: pagination.take,
+      },
+    };
   }
 
-  return prisma.company.findMany({
-    where,
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      isApproved: true,
-      createdAt: true,
-      timezone: true,
-    },
-  });
+  async findById(id) {
+    console.log("LLLLLLLLL");
+    const company = await prisma.company.findUnique({
+      where: { id: Number(id) },
+      include: {
+        bookings: true,
+        drivers: {
+          include: {
+            location: true,
+            availability: true,
+          },
+        },
+        customers: true,
+        users: {
+          include: {
+            role: {
+              include: {
+                permissions: {
+                  include: {
+                    permission: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        roles: {
+          include: {
+            permissions: {
+              include: {
+                permission: true,
+              },
+            },
+            users: true,
+          },
+        },
+        _count: {
+          select: {
+            drivers: true,
+            customers: true,
+            users: true,
+            bookings: true,
+          },
+        },
+      },
+    });
+
+    if (!company) {
+      throw new Error("Company not found");
+    }
+
+    return company;
+  }
+
+  async update(id, data) {
+    try {
+      // Validate input data
+      const validatedData = updateCompanySchema.parse(data);
+
+      // If updating email, check if it's already taken
+      if (validatedData.email) {
+        const existingCompany = await prisma.company.findFirst({
+          where: {
+            email: validatedData.email,
+            id: { not: Number(id) },
+          },
+        });
+
+        if (existingCompany) {
+          throw new Error("Email is already taken by another company");
+        }
+      }
+
+      // Hash password if provided
+      if (validatedData.password) {
+        validatedData.password = await bcrypt.hash(validatedData.password, 10);
+      }
+
+      // Update company
+      const company = await prisma.company.update({
+        where: { id: Number(id) },
+        data: validatedData,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          isApproved: true,
+          createdAt: true,
+          timezone: true,
+        },
+      });
+
+      return company;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(
+          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  async delete(id) {
+    try {
+      await prisma.company.delete({
+        where: { id: Number(id) },
+      });
+
+      return { success: true, message: "Company deleted successfully" };
+    } catch (error) {
+      throw new Error(`Failed to delete company: ${error.message}`);
+    }
+  }
+
+  async approveCompany(id) {
+    try {
+      const company = await prisma.company.update({
+        where: { id: Number(id) },
+        data: { isApproved: true },
+      });
+
+      return { success: true, message: "Company approved successfully" };
+    } catch (error) {
+      throw new Error(`Failed to approve company: ${error.message}`);
+    }
+  }
+
+  async authenticate(email, password) {
+    const company = await prisma.company.findUnique({
+      where: { email },
+    });
+
+    if (!company) {
+      throw new Error("Invalid credentials");
+    }
+
+    const passwordMatch = await bcrypt.compare(password, company.password);
+
+    if (!passwordMatch) {
+      throw new Error("Invalid credentials");
+    }
+
+    if (!company.isApproved) {
+      throw new Error("Your company account has not been approved yet");
+    }
+
+    const { password: _, ...companyWithoutPassword } = company;
+    return companyWithoutPassword;
+  }
 }
 
-async function approveCompany(id) {
-  return prisma.company.update({
-    where: { id },
-    data: { isApproved: true },
-  });
-}
-
-async function deleteCompany(id) {
-  return prisma.company.delete({
-    where: { id },
-  });
-}
-
-module.exports = {
-  create,
-  login,
-  getById,
-  update,
-  list,
-  approveCompany,
-  delete: deleteCompany,
-};
+module.exports = new CompanyService();

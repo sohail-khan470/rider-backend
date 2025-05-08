@@ -1,27 +1,29 @@
-// src/routes/companyRoutes.js
 const express = require("express");
 const router = express.Router();
+
 const companyController = require("./company-controller");
+// const { authenticate } = require("../middleware/authMiddleware");
+// const { validateCompany } = require("../middleware/validationMiddleware");
 
-// Company registration
-router.post("/register", companyController.createCompany);
+router.post("/", companyController.createCompany);
 
-// Company login
+//get staff by company
+router.get("/:id/users", companyController.getStaffByCompany);
+
 router.post("/login", companyController.loginCompany);
 
-// Get all companies (with optional filters)
-router.get("/", companyController.listCompanies);
+router.get("/", companyController.getAllCompanies);
 
-// Get single company by ID
 router.get("/:id", companyController.getCompanyById);
 
-// Update company
-router.patch("/:id", companyController.updateCompany);
+router.put(
+  "/:id",
 
-// Approve company (admin only)
-router.patch("/:id/approve", companyController.approveCompany);
+  companyController.updateCompany
+);
 
-// Delete company
 router.delete("/:id", companyController.deleteCompany);
+
+router.patch("/:id/approve", companyController.approveCompany);
 
 module.exports = router;

@@ -1,114 +1,209 @@
-// src/services/superAdminService.js
 const { PrismaClient } = require("@prisma/client");
-// const {
-//   hashPassword,
-//   comparePassword,
-//   generateToken,
-// } = require("../../utils/passwordUtils");
-
-const { AppError } = require("../../utils/errorUtils");
-const {
-  validateEmail,
-  validatePhone,
-  validatePassword,
-} = require("../../utils/validationUtils");
-const {
-  hashPassword,
-  comparePassword,
-  generateToken,
-} = require("../../utils/passwordUtils");
-
+const bcrypt = require("bcrypt");
+const { z } = require("zod");
 const prisma = new PrismaClient();
 
-async function create(data) {
-  if (!validateEmail(data.email)) {
-    throw new AppError("Invalid email format", 400);
-  }
+// Validation schemas
+const createSuperAdminSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
 
-  if (!validatePassword(data.password)) {
-    throw new AppError(
-      "Password must be at least 8 characters with at least one letter and one number",
-      400
-    );
-  }
+const updateSuperAdminSchema = z.object({
+  email: z.string().email("Invalid email format").optional(),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .optional(),
+});
 
-  const existingSuperAdmin = await prisma.superAdmin.findUnique({
-    where: { email: data.email },
-  });
+class SuperAdminService {
+  async create(data) {
+    try {
+      // Validate input data
+      const validatedData = createSuperAdminSchema.parse(data);
 
-  if (existingSuperAdmin) {
-    throw new AppError("Super admin with this email already exists", 400);
-  }
+      // Check if super admin with email already exists
+      const existingSuperAdmin = await prisma.superAdmin.findUnique({
+        where: { email: validatedData.email },
+      });
 
-  const hashedPassword = await hashPassword(data.password);
+      if (existingSuperAdmin) {
+        throw new Error("Super admin with this email already exists");
+      }
 
-  return prisma.superAdmin.create({
-    data: {
-      email: data.email,
-      password: hashedPassword,
-    },
-  });
-}
+      // Hash password
+      const hashedPassword = await bcrypt.hash(validatedData.password, 10);
 
-async function login(email, password) {
-  const superAdmin = await prisma.superAdmin.findUnique({
-    where: { email },
-  });
+      // Create super admin
+      const superAdmin = await prisma.superAdmin.create({
+        data: {
+          email: validatedData.email,
+          password: hashedPassword,
+        },
+      });
 
-  if (!superAdmin) {
-    throw new AppError("Invalid credentials", 401);
-  }
-
-  const isPasswordValid = await comparePassword(password, superAdmin.password);
-
-  if (!isPasswordValid) {
-    throw new AppError("Invalid credentials", 401);
-  }
-
-  const token = generateToken({ id: superAdmin.id, role: "superAdmin" });
-
-  return {
-    token,
-    superAdmin: { id: superAdmin.id, email: superAdmin.email },
-  };
-}
-
-async function getById(id) {
-  const superAdmin = await prisma.superAdmin.findUnique({
-    where: { id: Number(id) },
-  });
-
-  if (!superAdmin) {
-    throw new AppError("Super admin not found", 404);
-  }
-
-  return superAdmin;
-}
-
-async function update(id, data) {
-  if (data.email && !validateEmail(data.email)) {
-    throw new AppError("Invalid email format", 400);
-  }
-
-  if (data.password) {
-    if (!validatePassword(data.password)) {
-      throw new AppError(
-        "Password must be at least 8 characters with at least one letter and one number",
-        400
-      );
+      // Remove password from response
+      const { password, ...superAdminWithoutPassword } = superAdmin;
+      return superAdminWithoutPassword;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(
+          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
+        );
+      }
+      throw error;
     }
-    data.password = await hashPassword(data.password);
   }
 
-  return prisma.superAdmin.update({
-    where: { id: Number(id) },
-    data,
-  });
+  async findAll() {
+    const superAdmins = await prisma.superAdmin.findMany({
+      select: {
+        id: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return superAdmins;
+  }
+
+  async findById(id) {
+    const superAdmin = await prisma.superAdmin.findUnique({
+      where: { id: Number(id) },
+      select: {
+        id: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!superAdmin) {
+      throw new Error("Super admin not found");
+    }
+
+    return superAdmin;
+  }
+
+  async update(id, data) {
+    try {
+      // Validate input data
+      const validatedData = updateSuperAdminSchema.parse(data);
+
+      // If updating email, check if it's already taken
+      if (validatedData.email) {
+        const existingSuperAdmin = await prisma.superAdmin.findFirst({
+          where: {
+            email: validatedData.email,
+            id: { not: Number(id) },
+          },
+        });
+
+        if (existingSuperAdmin) {
+          throw new Error("Email is already taken by another super admin");
+        }
+      }
+
+      // If updating password, hash it
+      if (validatedData.password) {
+        validatedData.password = await bcrypt.hash(validatedData.password, 10);
+      }
+
+      // Update super admin
+      const superAdmin = await prisma.superAdmin.update({
+        where: { id: Number(id) },
+        data: validatedData,
+        select: {
+          id: true,
+          email: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      return superAdmin;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new Error(
+          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  async delete(id) {
+    try {
+      await prisma.superAdmin.delete({
+        where: { id: Number(id) },
+      });
+
+      return { success: true, message: "Super admin deleted successfully" };
+    } catch (error) {
+      throw new Error(`Failed to delete super admin: ${error.message}`);
+    }
+  }
+
+  async authenticate(email, password) {
+    const superAdmin = await prisma.superAdmin.findUnique({
+      where: { email },
+    });
+
+    if (!superAdmin) {
+      throw new Error("Invalid credentials");
+    }
+
+    const passwordMatch = await bcrypt.compare(password, superAdmin.password);
+
+    if (!passwordMatch) {
+      throw new Error("Invalid credentials");
+    }
+
+    // Remove password from response
+    const { password: _, ...superAdminWithoutPassword } = superAdmin;
+    return superAdminWithoutPassword;
+  }
+
+  async getDashboardStats() {
+    const [
+      totalCompanies,
+      pendingCompanies,
+      totalDrivers,
+      totalCustomers,
+      totalBookings,
+      recentBookings,
+    ] = await Promise.all([
+      prisma.company.count(),
+      prisma.company.count({ where: { isApproved: false } }),
+      prisma.driver.count(),
+      prisma.customer.count(),
+      prisma.booking.count(),
+      prisma.booking.findMany({
+        orderBy: {
+          requestedAt: "desc",
+        },
+        include: {
+          company: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      totalCompanies,
+      pendingCompanies,
+      totalDrivers,
+      totalCustomers,
+      totalBookings,
+      recentBookings,
+    };
+  }
 }
 
-module.exports = {
-  create,
-  login,
-  getById,
-  update,
-};
+module.exports = new SuperAdminService();

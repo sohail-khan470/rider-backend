@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  
   "scripts": {
     "dev": "nodemon index",
     "start": "node index",
-    "seed":"node seed.js"
+    "seed": "node seed.js"
   },
   "keywords": [],
   "author": "Bluell-inc",
@@ -24,7 +23,8 @@
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.9",
-    "winston": "^3.13.0"
+    "winston": "^3.13.0",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
     "prisma": "^6.6.0"

@@ -1,8 +1,7 @@
-// src/controllers/customerController.js
 const { StatusCodes } = require("http-status-codes");
 const customerService = require("./customer-service");
-const { AppError } = require("../utils/errorUtils");
 
+// Create a new customer
 async function createCustomer(req, res, next) {
   try {
     const customer = await customerService.create(req.body);
@@ -17,10 +16,33 @@ async function createCustomer(req, res, next) {
   }
 }
 
+// Get all customers with optional filters and pagination
+async function getAllCustomers(req, res, next) {
+  try {
+    const { page = 1, limit = 10, ...filters } = req.query;
+    const pagination = {
+      skip: (page - 1) * limit,
+      take: parseInt(limit),
+    };
+
+    const result = await customerService.findAll(filters, pagination);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Customers retrieved successfully",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Get a customer by ID
 async function getCustomerById(req, res, next) {
   try {
     const { id } = req.params;
-    const customer = await customerService.getById(id);
+    const customer = await customerService.findById(id);
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -32,46 +54,27 @@ async function getCustomerById(req, res, next) {
   }
 }
 
-async function listCustomers(req, res, next) {
-  try {
-    const { companyId } = req.query;
-    const searchQuery = req.query.search || "";
-
-    if (!companyId) {
-      throw new AppError("Company ID is required", StatusCodes.BAD_REQUEST);
-    }
-
-    const customers = await customerService.list(companyId, searchQuery);
-
-    res.status(StatusCodes.OK).json({
-      success: true,
-      message: "Customers retrieved successfully",
-      data: customers,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
+// Update a customer
 async function updateCustomer(req, res, next) {
   try {
     const { id } = req.params;
-    const updatedCustomer = await customerService.update(id, req.body);
+    const customer = await customerService.update(id, req.body);
 
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Customer updated successfully",
-      data: updatedCustomer,
+      data: customer,
     });
   } catch (error) {
     next(error);
   }
 }
 
+// Delete a customer
 async function deleteCustomer(req, res, next) {
   try {
     const { id } = req.params;
-    await customerService.delete(id);
+    const result = await customerService.delete(id);
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -82,15 +85,23 @@ async function deleteCustomer(req, res, next) {
   }
 }
 
-async function getAllCustomers(req, res, next) {
-  console.log("Fetching all customers...");
+// Get customer bookings
+async function getCustomerBookings(req, res, next) {
   try {
-    const customers = await customerService.getAllCustomers();
+    const { id } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const pagination = {
+      skip: (page - 1) * limit,
+      take: parseInt(limit),
+    };
+
+    const result = await customerService.getCustomerBookings(id, pagination);
 
     res.status(StatusCodes.OK).json({
       success: true,
-      message: "Customers retrieved successfully",
-      data: customers,
+      message: "Customer bookings retrieved successfully",
+      data: result.data,
+      pagination: result.pagination,
     });
   } catch (error) {
     next(error);
@@ -99,9 +110,9 @@ async function getAllCustomers(req, res, next) {
 
 module.exports = {
   createCustomer,
+  getAllCustomers,
   getCustomerById,
-  listCustomers,
   updateCustomer,
   deleteCustomer,
-  getAllCustomers,
+  getCustomerBookings,
 };

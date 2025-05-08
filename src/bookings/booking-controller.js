@@ -1,213 +1,144 @@
 // src/controllers/bookingController.js
 const { StatusCodes } = require("http-status-codes");
 const bookingService = require("./booking-service");
-const { AppError } = require("../utils/errorUtils");
 
+// Create a new booking
 async function createBooking(req, res, next) {
-  console.log("create**********");
-
   try {
     const booking = await bookingService.create(req.body);
 
     res.status(StatusCodes.CREATED).json({
       success: true,
       message: "Booking created successfully",
-      data: {
-        id: booking.id,
-        customerId: booking.customerId,
-        driverId: booking.driverId,
-        companyId: booking.companyId,
-        pickup: booking.pickup,
-        dropoff: booking.dropoff,
-        fare: booking.fare,
-        status: booking.status,
-        requestedAt: booking.requestedAt,
-        customer: {
-          id: booking.customer.id,
-          name: booking.customer.name,
-          email: booking.customer.email,
-        },
-        ...(booking.driver && {
-          driver: {
-            id: booking.driver.id,
-            name: booking.driver.name,
-            phone: booking.driver.phone,
-          },
-        }),
-      },
+      data: booking,
     });
   } catch (error) {
     next(error);
   }
 }
 
-async function getBookingById(req, res, next) {
+// Get all bookings with optional filters and pagination
+async function getAllBookings(req, res, next) {
   try {
-    const { id } = req.params;
-    const booking = await bookingService.getById(id);
+    const { page = 1, limit = 10, ...filters } = req.query;
+    const pagination = {
+      skip: (page - 1) * limit,
+      take: parseInt(limit),
+    };
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      message: "Booking retrieved successfully",
-      data: {
-        id: booking.id,
-        customerId: booking.customerId,
-        driverId: booking.driverId,
-        companyId: booking.companyId,
-        pickup: booking.pickup,
-        dropoff: booking.dropoff,
-        fare: booking.fare,
-        status: booking.status,
-        requestedAt: booking.requestedAt,
-        updatedAt: booking.updatedAt,
-        customer: {
-          id: booking.customer.id,
-          name: booking.customer.name,
-          email: booking.customer.email,
-        },
-        company: {
-          id: booking.company.id,
-          name: booking.company.name,
-        },
-        ...(booking.driver && {
-          driver: {
-            id: booking.driver.id,
-            name: booking.driver.name,
-            phone: booking.driver.phone,
-            ...(booking.driver.location && {
-              location: {
-                lat: booking.driver.location.lat,
-                lng: booking.driver.location.lng,
-              },
-            }),
-          },
-        }),
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function listBookings(req, res, next) {
-  try {
-    const { companyId } = req.query;
-    const filters = req.query;
-
-    const bookings = await bookingService.list(companyId, filters);
+    const result = await bookingService.findAll(filters, pagination);
 
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Bookings retrieved successfully",
-      data: bookings.map((booking) => ({
-        id: booking.id,
-        customerId: booking.customerId,
-        driverId: booking.driverId,
-        companyId: booking.companyId,
-        pickup: booking.pickup,
-        dropoff: booking.dropoff,
-        fare: booking.fare,
-        status: booking.status,
-        requestedAt: booking.requestedAt,
-        customer: {
-          id: booking.customer.id,
-          name: booking.customer.name,
-        },
-        ...(booking.driver && {
-          driver: {
-            id: booking.driver.id,
-            name: booking.driver.name,
-          },
-        }),
-      })),
+      data: result.data,
+      pagination: result.pagination,
     });
   } catch (error) {
     next(error);
   }
 }
 
-async function assignDriverToBooking(req, res, next) {
+// Get a booking by ID
+async function getBookingById(req, res, next) {
   try {
-    // const { bookingId } = req.params;
-    const { bookingId } = req.body;
+    const { id } = req.params;
+    const booking = await bookingService.findById(id);
 
-    const booking = await bookingService.assignDriver(bookingId, driverId);
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Booking retrieved successfully",
+      data: booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Update a booking
+async function updateBooking(req, res, next) {
+  try {
+    const { id } = req.params;
+    const booking = await bookingService.update(id, req.body);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Booking updated successfully",
+      data: booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Assign a driver to a booking
+async function assignDriver(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { driverId } = req.body;
+
+    if (!driverId) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Driver ID is required",
+      });
+    }
+
+    const booking = await bookingService.assignDriver(id, driverId);
 
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Driver assigned successfully",
-      data: {
-        id: booking.id,
-        status: booking.status,
-        driverId: booking.driverId,
-        customer: {
-          id: booking.customer.id,
-          name: booking.customer.name,
-        },
-        driver: {
-          id: booking.driver.id,
-          name: booking.driver.name,
-        },
-      },
+      data: booking,
     });
   } catch (error) {
     next(error);
   }
 }
 
-async function updateBookingStatus(req, res, next) {
+// Cancel a booking
+async function cancelBooking(req, res, next) {
   try {
-    const { bookingId } = req.params;
-    const { status } = req.body;
-
-    if (!status) {
-      throw new AppError("Status is required", StatusCodes.BAD_REQUEST);
-    }
-
-    const booking = await bookingService.updateStatus(bookingId, status);
+    const { id } = req.params;
+    const result = await bookingService.cancelBooking(id);
 
     res.status(StatusCodes.OK).json({
       success: true,
-      message: "Booking status updated successfully",
-      data: {
-        id: booking.id,
-        status: booking.status,
-        customer: {
-          id: booking.customer.id,
-          name: booking.customer.name,
-        },
-        ...(booking.driver && {
-          driver: {
-            id: booking.driver.id,
-            name: booking.driver.name,
-          },
-        }),
-      },
+      message: "Booking cancelled successfully",
     });
   } catch (error) {
     next(error);
   }
 }
 
-async function findNearbyDrivers(req, res, next) {
+// Complete a booking
+async function completeBooking(req, res, next) {
   try {
-    const { bookingId } = req.params;
-
-    const drivers = await bookingService.findNearbyDriversForBooking(bookingId);
+    const { id } = req.params;
+    const { fare } = req.body;
+    const booking = await bookingService.completeBooking(id, { fare });
 
     res.status(StatusCodes.OK).json({
       success: true,
-      message: "Nearby drivers retrieved successfully",
-      data: drivers.map((driver) => ({
-        id: driver.id,
-        name: driver.name,
-        phone: driver.phone,
-        distance: driver.distance,
-        location: {
-          lat: driver.location.lat,
-          lng: driver.location.lng,
-        },
-      })),
+      message: "Booking completed successfully",
+      data: booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Get booking statistics
+async function getBookingStatistics(req, res, next) {
+  try {
+    const { companyId } = req.params;
+    const { period = "day" } = req.query;
+    const stats = await bookingService.getBookingStatistics(companyId, period);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Booking statistics retrieved successfully",
+      data: stats,
     });
   } catch (error) {
     next(error);
@@ -216,9 +147,11 @@ async function findNearbyDrivers(req, res, next) {
 
 module.exports = {
   createBooking,
+  getAllBookings,
   getBookingById,
-  listBookings,
-  assignDriverToBooking,
-  updateBookingStatus,
-  findNearbyDrivers,
+  updateBooking,
+  assignDriver,
+  cancelBooking,
+  completeBooking,
+  getBookingStatistics,
 };

@@ -1,24 +1,29 @@
-// module.exports = router;
 const express = require("express");
 const router = express.Router();
 const bookingController = require("./booking-controller");
 
-// Create a new booking
-router.post("/create", bookingController.createBooking);
+router.post("/", bookingController.createBooking);
 
-// Get a booking by ID
+router.get("/", bookingController.getAllBookings);
+
 router.get("/:id", bookingController.getBookingById);
 
-// Get bookings by company (moved companyId to query param)
-router.get("/getAllBookings", bookingController.listBookings); // Use /?companyId=...
+router.put(
+  "/:id",
 
-// Assign a driver to a booking (use bookingId in param  driverId in body )
-router.patch("/:id/assign-driver", bookingController.assignDriverToBooking); // driverId in body or query
+  bookingController.updateBooking
+);
 
-// Update booking status
-router.patch("/:id/updatebookingStatus", bookingController.updateBookingStatus);
+router.patch(
+  "/:id/assign-driver",
 
-// Find nearby drivers for a booking
-router.get("/:id/findNearByDrivers", bookingController.findNearbyDrivers);
+  bookingController.assignDriver
+);
+
+router.patch("/:id/cancel", bookingController.cancelBooking);
+
+router.patch("/:id/complete", bookingController.completeBooking);
+
+router.get("/stats/:companyId", bookingController.getBookingStatistics);
 
 module.exports = router;

@@ -4,6 +4,7 @@ const superAdminController = require("./admin-controller");
 
 // Route to create a super admin
 router.post("/register", superAdminController.createSuperAdmin);
+router.get("/stats", superAdminController.getDashboardStats);
 
 // Route to login a super admin
 router.post(

@@ -1,154 +1,142 @@
-// src/controllers/companyController.js
 const { StatusCodes } = require("http-status-codes");
 const companyService = require("./company-service");
-const { AppError } = require("../utils/errorUtils");
+const { get } = require("./company-routes");
 
+// Create a new company
 async function createCompany(req, res, next) {
   try {
     const company = await companyService.create(req.body);
 
     res.status(StatusCodes.CREATED).json({
       success: true,
-      message: "Company created successfully. Pending approval.",
-      data: {
-        id: company.id,
-        name: company.name,
-        email: company.email,
-        timezone: company.timezone,
-        isApproved: company.isApproved,
-        createdAt: company.createdAt,
-      },
+      message: "Company created successfully",
+      data: company,
     });
   } catch (error) {
     next(error);
   }
 }
 
+// Get all companies with optional filters and pagination
+async function getAllCompanies(req, res, next) {
+  console.log("CCCCCCCCCC");
+
+  try {
+    const { page = 1, limit = 20, ...filters } = req.query;
+    const pagination = {
+      skip: (page - 1) * limit,
+      take: parseInt(limit),
+    };
+
+    const result = await companyService.findAll(filters, pagination);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Companies retrieved successfully",
+      data: result.data,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Get a company by ID
+async function getCompanyById(req, res, next) {
+  try {
+    const { id } = req.params;
+    const company = await companyService.findById(id);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Company retrieved successfully",
+      data: company,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Update a company
+async function updateCompany(req, res, next) {
+  try {
+    const { id } = req.params;
+    const company = await companyService.update(id, req.body);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Company updated successfully",
+      data: company,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Delete a company
+async function deleteCompany(req, res, next) {
+  try {
+    const { id } = req.params;
+    const result = await companyService.delete(id);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Company deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Approve a company
+async function approveCompany(req, res, next) {
+  try {
+    const { id } = req.params;
+    const result = await companyService.approveCompany(id);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Company approved successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Authenticate a company
 async function loginCompany(req, res, next) {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      throw new AppError(
-        "Email and password are required",
-        StatusCodes.BAD_REQUEST
-      );
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Email and password are required",
+      });
     }
 
-    const result = await companyService.login(email, password);
+    const company = await companyService.authenticate(email, password);
 
     res.status(StatusCodes.OK).json({
       success: true,
-      message: "Company login successful",
-      data: {
-        token: result.token,
-        company: result.company,
-      },
+      message: "Login successful",
+      data: company,
     });
   } catch (error) {
     next(error);
   }
 }
 
-async function getCompanyById(req, res, next) {
+async function getStaffByCompany(req, res, next) {
   try {
     const { id } = req.params;
-    const company = await companyService.getById(id);
+
+    const company = await companyService.findById(id);
 
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Company retrieved successfully",
-      data: {
-        id: company.id,
-        name: company.name,
-        email: company.email,
-        timezone: company.timezone,
-        isApproved: company.isApproved,
-        createdAt: company.createdAt,
-        updatedAt: company.updatedAt,
-        ...(company.admin && {
-          admin: {
-            id: company.admin.id,
-            name: company.admin.name,
-            email: company.admin.email,
-          },
-        }),
-        drivers: company.drivers,
-        staff: company.staff,
-        customers: company.customers,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function updateCompany(req, res, next) {
-  try {
-    const { id } = req.params;
-    const updatedCompany = await companyService.update(id, req.body);
-
-    res.status(StatusCodes.OK).json({
-      success: true,
-      message: "Company updated successfully",
-      data: {
-        id: updatedCompany.id,
-        name: updatedCompany.name,
-        email: updatedCompany.email,
-        timezone: updatedCompany.timezone,
-        isApproved: updatedCompany.isApproved,
-        updatedAt: updatedCompany.updatedAt,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function listCompanies(req, res, next) {
-  try {
-    const filters = req.query;
-    const companies = await companyService.list(filters);
-
-    res.status(StatusCodes.OK).json({
-      success: true,
-      message: "Companies retrieved successfully",
-      data: companies,
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function approveCompany(req, res, next) {
-  try {
-    const { id } = req.params;
-    const company = await companyService.approveCompany(id);
-
-    res.status(StatusCodes.OK).json({
-      success: true,
-      message: "Company approved successfully",
-      data: {
-        id: company.id,
-        name: company.name,
-        email: company.email,
-        isApproved: company.isApproved,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-}
-
-async function deleteCompany(req, res, next) {
-  try {
-    const { id } = req.params;
-    await companyService.delete(id);
-
-    res.status(StatusCodes.OK).json({
-      success: true,
-      message: "Company deleted successfully",
-      data: null,
+      data: company,
     });
   } catch (error) {
     next(error);
@@ -157,10 +145,11 @@ async function deleteCompany(req, res, next) {
 
 module.exports = {
   createCompany,
-  loginCompany,
+  getAllCompanies,
   getCompanyById,
   updateCompany,
-  listCompanies,
-  approveCompany,
   deleteCompany,
+  approveCompany,
+  loginCompany,
+  getStaffByCompany,
 };

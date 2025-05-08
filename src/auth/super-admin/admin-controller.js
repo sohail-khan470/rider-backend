@@ -47,6 +47,22 @@ async function loginSuperAdmin(req, res, next) {
   }
 }
 
+async function getDashboardStats(req, res, next) {
+  try {
+    const result = await superAdminService.getDashboardStats();
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Super admin login successful",
+      data: {
+        result,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function getSuperAdminById(req, res, next) {
   try {
     const { id } = req.params;
@@ -91,4 +107,5 @@ module.exports = {
   loginSuperAdmin,
   getSuperAdminById,
   updateSuperAdmin,
+  getDashboardStats,
 };

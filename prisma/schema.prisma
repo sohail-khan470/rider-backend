@@ -18,57 +18,64 @@ model SuperAdmin {
 }
 
 model Company {
-  id         Int      @id @default(autoincrement())
+  id         Int        @id @default(autoincrement())
   name       String
-  email      String   @unique
+  email      String     @unique
   password   String
-  isApproved Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  timezone   String   @default("UTC")
-
-  admin     CompanyAdmin?
-  bookings  Booking[]
-  drivers   Driver[]
-  staff     Staff[]
-  customers Customer[]
+  isApproved Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  timezone   String     @default("UTC")
+  bookings   Booking[]
+  drivers    Driver[]
+  customers  Customer[]
+  users      User[]
+  roles      Role[]
 
   @@map("company")
 }
 
-model CompanyAdmin {
-  id        Int     @id @default(autoincrement())
+model User {
+  id        Int      @id @default(autoincrement())
   name      String
-  email     String  @unique
-  password  String
-  companyId Int     @unique
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@map("company_admin")
-}
-
-model StaffRole {
-  id    Int     @id @default(autoincrement())
-  name  String  @unique
-  staff Staff[]
-
-  @@map("staff_role")
-}
-
-model Staff {
-  id        Int    @id @default(autoincrement())
-  name      String
-  email     String @unique
+  email     String   @unique
   password  String
   roleId    Int
   companyId Int
-
-  role    StaffRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  company Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
+  company   Company  @relation(fields: [companyId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  @@map("staff")
+  @@map("user")
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  companyId   Int
+  company     Company          @relation(fields: [companyId], references: [id])
+  permissions RolePermission[]
+  users       User[]
+
+  @@map("role")
+}
+
+model Permission {
+  id    Int              @id @default(autoincrement())
+  name  String           @unique
+  roles RolePermission[]
+
+  @@map("permission")
+}
+
+model RolePermission {
+  id           Int        @id @default(autoincrement())
+  roleId       Int
+  permissionId Int
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permission")
 }
 
 model Driver {
@@ -82,12 +89,11 @@ model Driver {
   company     Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   location    Location?
 
-  bookings Booking[]
-
+  bookings     Booking[]
   availability DriverAvailability[]
 
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("driver")
 }
@@ -112,8 +118,8 @@ model Customer {
 
   bookings Booking[]
 
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("customer")
 }

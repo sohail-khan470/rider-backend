@@ -1,36 +1,33 @@
-// src/routes/driverRoutes.js
 const express = require("express");
 const router = express.Router();
-const driverController = require("./drivers-controller");
+const driverController = require("./drivers-service");
 
-// Create a driver
-router.post("/register", driverController.createDriver);
+// Driver CRUD routes
+router.post(
+  "/",
 
-// List all drivers
-router.get("/getAll", driverController.listAllDrivers);
+  driverController.create
+);
+router.get("/", driverController.findAll);
+router.get("/:id", driverController.findById);
+router.put(
+  "/:id",
 
-// Get a driver by ID
-router.get("/:id", driverController.getDriverById);
+  driverController.update
+);
+router.delete("/:id", driverController.delete);
 
-// List drivers with optional status filter
-router.get("/getAllDrivers", driverController.listDrivers);
+// Driver status routes
+router.patch("/:id/status", driverController.update);
 
-// Update driver by ID
-router.put("/:id", driverController.updateDriver);
+// Driver location routes
+router.put("/:id/location", driverController.updateLocation);
 
-// Update driver status
-router.patch("/:id/updateStatus", driverController.updateDriverStatus);
+// Driver availability routes
+router.post("/availability", driverController.addAvailability);
+router.delete("/availability/:id", driverController.removeAvailability);
 
-// Delete a driver by ID
-router.delete("/:id", driverController.deleteDriver);
-
-// Add driver availability
-router.post("/availability", driverController.addDriverAvailability);
-
-// Remove driver availability by availability ID
-router.delete("/availability/:id", driverController.removeDriverAvailability);
-
-// Find available drivers based on company ID and request time
-router.get("/avalibleDrivers", driverController.findAvailableDrivers);
+// Nearby drivers route
+router.get("/nearby", driverController.getNearbyDrivers);
 
 module.exports = router;
