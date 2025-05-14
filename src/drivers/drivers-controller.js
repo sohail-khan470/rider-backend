@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
-const driverService = require("../services/driverService");
+const driverService = require("./drivers-service");
 
 // Create a new driver
 async function createDriver(req, res, next) {
@@ -18,13 +18,9 @@ async function createDriver(req, res, next) {
 // Get all drivers with optional filters and pagination
 async function getAllDrivers(req, res, next) {
   try {
-    const { page = 1, limit = 10, ...filters } = req.query;
-    const pagination = {
-      skip: (page - 1) * limit,
-      take: parseInt(limit),
-    };
-
-    const result = await driverService.findAll(filters, pagination);
+    const companyId = req.query.companyId;
+    const { filters } = req.query;
+    const result = await driverService.findAll(filters, companyId);
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -143,16 +139,33 @@ async function removeDriverAvailability(req, res, next) {
 // Get nearby drivers
 async function getNearbyDrivers(req, res, next) {
   try {
-    const { lat, lng, radius, companyId } = req.query;
+    const { lat, lng, radius, companyId, cityId } = req.query;
     const drivers = await driverService.getNearbyDrivers(
       parseFloat(lat),
       parseFloat(lng),
       radius ? parseFloat(radius) : 5,
-      companyId ? parseInt(companyId) : null
+      companyId ? parseInt(companyId) : null,
+      cityId ? parseInt(cityId) : null
     );
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Nearby drivers retrieved successfully",
+      data: drivers,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Get drivers by city
+async function getDriversByCity(req, res, next) {
+  try {
+    const { cityId } = req.params;
+    const { status } = req.query;
+    const drivers = await driverService.getDriversByCity(cityId, status);
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Drivers retrieved successfully",
       data: drivers,
     });
   } catch (error) {
@@ -171,4 +184,5 @@ module.exports = {
   addDriverAvailability,
   removeDriverAvailability,
   getNearbyDrivers,
+  getDriversByCity,
 };

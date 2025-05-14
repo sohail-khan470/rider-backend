@@ -1,12 +1,12 @@
 // src/middlewares/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const { StatusCodes } = require("http-status-codes");
-const AppError = require("../utils/appError");
+const { AppError } = require("../utils/errorUtils");
 
 /**
  * Middleware to authenticate company admins using JWT
  */
-const authenticateCompanyAdmin = async (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   try {
     // Get token from authorization header
     const authHeader = req.headers.authorization;
@@ -32,8 +32,7 @@ const authenticateCompanyAdmin = async (req, res, next) => {
 
     // Add user info to request
     req.user = {
-      id: decoded.id,
-      email: decoded.email,
+      userId: decoded.id,
       companyId: decoded.companyId,
       role: "companyAdmin",
     };
@@ -57,5 +56,5 @@ const authenticateCompanyAdmin = async (req, res, next) => {
 };
 
 module.exports = {
-  authenticateCompanyAdmin,
+  authMiddleware,
 };

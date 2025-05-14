@@ -6,12 +6,13 @@
   "scripts": {
     "dev": "nodemon index",
     "start": "node index",
-    "seed": "node seed.js"
+    "seed": "node seed-data/seed.js"
   },
   "keywords": [],
   "author": "Bluell-inc",
   "license": "ISC",
   "dependencies": {
+    "@faker-js/faker": "^9.7.0",
     "@prisma/client": "^6.6.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
@@ -22,7 +23,10 @@
     "http-status-codes": "^2.3.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
+    "leaflet": "^1.9.4",
+    "morgan": "^1.10.0",
     "nodemon": "^3.1.9",
+    "react-leaflet": "^5.0.0",
     "winston": "^3.13.0",
     "zod": "^3.24.4"
   },

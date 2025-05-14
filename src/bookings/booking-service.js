@@ -45,6 +45,22 @@ const updateBookingSchema = z.object({
 });
 
 class BookingService {
+  async getBookingsByCompany(companyId) {
+    try {
+      const data = await prisma.booking.findMany({
+        where: {
+          companyId: Number(companyId), // ✅ Correct field
+        },
+      });
+
+      console.log(data);
+      return data;
+    } catch (error) {
+      console.error("Error fetching bookings:", error);
+      return [];
+    }
+  }
+
   async create(data) {
     try {
       // Validate input data

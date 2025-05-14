@@ -17,6 +17,21 @@ async function createBooking(req, res, next) {
   }
 }
 
+async function getBookingsByCompany(req, res, next) {
+  const companyId = req.body.companyId;
+  try {
+    const result = await bookingService.getBookingsByCompany(companyId);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Bookings retrieved successfully",
+      result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 // Get all bookings with optional filters and pagination
 async function getAllBookings(req, res, next) {
   try {
@@ -154,4 +169,5 @@ module.exports = {
   cancelBooking,
   completeBooking,
   getBookingStatistics,
+  getBookingsByCompany,
 };

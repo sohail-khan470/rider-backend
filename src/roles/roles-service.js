@@ -123,12 +123,6 @@ class RoleService {
             permissions: true,
           },
         },
-        company: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
       },
     });
 
@@ -151,12 +145,6 @@ class RoleService {
         permissions: {
           include: {
             permission: true,
-          },
-        },
-        company: {
-          select: {
-            id: true,
-            name: true,
           },
         },
         _count: {
@@ -259,12 +247,6 @@ class RoleService {
             permissions: {
               include: {
                 permission: true,
-              },
-            },
-            company: {
-              select: {
-                id: true,
-                name: true,
               },
             },
           },

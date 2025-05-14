@@ -19,8 +19,6 @@ async function createCompany(req, res, next) {
 
 // Get all companies with optional filters and pagination
 async function getAllCompanies(req, res, next) {
-  console.log("CCCCCCCCCC");
-
   try {
     const { page = 1, limit = 20, ...filters } = req.query;
     const pagination = {

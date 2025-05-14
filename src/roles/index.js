@@ -1,3 +1,3 @@
 module.exports = {
-  rolesRoutes: require("./role-routes"),
+  rolesRoutes: require("./roles-routes"),
 };

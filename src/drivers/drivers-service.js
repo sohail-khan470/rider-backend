@@ -1,67 +1,12 @@
 const { PrismaClient } = require("@prisma/client");
-const { z } = require("zod");
 const prisma = new PrismaClient();
-
-// Validation schemas
-const createDriverSchema = z.object({
-  name: z.string().min(2, "Driver name must be at least 2 characters"),
-  email: z.string().email("Invalid email format"),
-  phone: z.string().min(10, "Phone number must be at least 10 characters"),
-  vehicleInfo: z.string().min(5, "Vehicle info must be at least 5 characters"),
-  companyId: z.number().int().positive("Company ID must be a positive integer"),
-  status: z
-    .enum(["offline", "online", "on_trip"])
-    .optional()
-    .default("offline"),
-});
-
-const updateDriverSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Driver name must be at least 2 characters")
-    .optional(),
-  email: z.string().email("Invalid email format").optional(),
-  phone: z
-    .string()
-    .min(10, "Phone number must be at least 10 characters")
-    .optional(),
-  vehicleInfo: z
-    .string()
-    .min(5, "Vehicle info must be at least 5 characters")
-    .optional(),
-  status: z.enum(["offline", "online", "on_trip"]).optional(),
-  companyId: z
-    .number()
-    .int()
-    .positive("Company ID must be a positive integer")
-    .optional(),
-});
-
-const updateLocationSchema = z.object({
-  lat: z.number().min(-90).max(90),
-  lng: z.number().min(-180).max(180),
-});
-
-const createAvailabilitySchema = z
-  .object({
-    driverId: z.number().int().positive(),
-    startTime: z.string().datetime(),
-    endTime: z.string().datetime(),
-  })
-  .refine((data) => new Date(data.startTime) < new Date(data.endTime), {
-    message: "End time must be after start time",
-    path: ["endTime"],
-  });
 
 class DriverService {
   async create(data) {
     try {
-      // Validate input data
-      const validatedData = createDriverSchema.parse(data);
-
       // Check if driver with email already exists
       const existingDriver = await prisma.driver.findUnique({
-        where: { email: validatedData.email },
+        where: { email: data.email },
       });
 
       if (existingDriver) {
@@ -70,87 +15,168 @@ class DriverService {
 
       // Check if company exists
       const company = await prisma.company.findUnique({
-        where: { id: validatedData.companyId },
+        where: { id: data.companyId },
       });
 
       if (!company) {
         throw new Error("Company not found");
       }
 
+      // Check if city exists
+      const city = await prisma.city.findUnique({
+        where: { id: data.cityId },
+      });
+
+      if (!city) {
+        throw new Error("City not found");
+      }
+
       // Create driver
       const driver = await prisma.driver.create({
-        data: validatedData,
+        data: {
+          ...data,
+          status: data.status || "offline",
+          timezone: data.timezone || company.timezone,
+        },
       });
 
       return driver;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
 
-  async findAll(filters = {}, pagination = { skip: 0, take: 10 }) {
-    const drivers = await prisma.driver.findMany({
-      where: filters,
-      skip: pagination.skip,
-      take: pagination.take,
-      include: {
-        company: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        location: true,
-        _count: {
-          select: {
-            bookings: true,
-          },
-        },
-      },
-    });
+  // async findAll(filters = {}, companyId) {
+  //   console.log(companyId);
+  //   console.log("Finding all drivers");
 
-    const total = await prisma.driver.count({ where: filters });
+  //   try {
+  //     // Execute both queries in parallel
+  //     const [drivers, total] = await Promise.all([
+  //       prisma.driver.findMany({
+  //         where: filters,
+  //         include: {
+  //           company: {
+  //             select: {
+  //               id: true,
+  //               name: true,
+  //             },
+  //           },
+  //           city: {
+  //             select: {
+  //               id: true,
+  //               name: true,
+  //             },
+  //           },
+  //           location: true,
+  //           _count: {
+  //             select: {
+  //               bookings: true,
+  //             },
+  //           },
+  //         },
+  //       }),
+  //       prisma.driver.count({
+  //         where: filters,
+  //       }),
+  //     ]);
 
-    return {
-      data: drivers,
-      pagination: {
+  //     return {
+  //       data: drivers,
+  //     };
+  //   } catch (error) {
+  //     console.error("Error in DriverService.findAll:", error);
+  //     throw new Error("Failed to retrieve drivers: " + error.message);
+  //   }
+  // }
+  async findAll(filters = {}, companyId) {
+    try {
+      // Merge companyId into filters
+      const whereClause = {
+        ...filters,
+        companyId: Number(companyId), // this ensures only drivers of the given company are fetched
+      };
+
+      // Execute both queries in parallel
+      const [drivers, total] = await Promise.all([
+        prisma.driver.findMany({
+          where: whereClause,
+          include: {
+            company: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            city: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            location: true,
+            _count: {
+              select: {
+                bookings: true,
+              },
+            },
+          },
+        }),
+        prisma.driver.count({
+          where: whereClause,
+        }),
+      ]);
+
+      return {
+        data: drivers,
         total,
-        page: Math.floor(pagination.skip / pagination.take) + 1,
-        pageSize: pagination.take,
-      },
-    };
+      };
+    } catch (error) {
+      console.error("Error in DriverService.findAll:", error);
+      throw new Error("Failed to retrieve drivers: " + error.message);
+    }
   }
 
   async findById(id) {
     const driver = await prisma.driver.findUnique({
       where: { id: Number(id) },
-      include: {
+      select: {
+        name: true,
+        email: true,
+        phone: true,
+        status: true,
+        vehicleInfo: true,
+        timezone: true,
+        createdAt: true,
+        updatedAt: true,
         company: {
           select: {
             id: true,
             name: true,
           },
         },
-        location: true,
-        bookings: {
-          take: 5,
-          orderBy: {
-            requestedAt: "desc",
+        city: {
+          select: {
+            id: true,
+            name: true,
           },
         },
-        availability: {
-          where: {
-            endTime: {
-              gte: new Date(),
-            },
+        location: {
+          select: {
+            id: true,
+            lat: true,
+            lng: true,
           },
-          orderBy: {
-            startTime: "asc",
+        },
+        bookings: {
+          orderBy: { requestedAt: "desc" },
+        },
+        availability: {
+          orderBy: { startTime: "asc" },
+          select: {
+            id: true,
+            startTime: true,
+            endTime: true,
           },
         },
       },
@@ -165,14 +191,11 @@ class DriverService {
 
   async update(id, data) {
     try {
-      // Validate input data
-      const validatedData = updateDriverSchema.parse(data);
-
       // If updating email, check if it's already taken
-      if (validatedData.email) {
+      if (data.email) {
         const existingDriver = await prisma.driver.findFirst({
           where: {
-            email: validatedData.email,
+            email: data.email,
             id: { not: Number(id) },
           },
         });
@@ -183,9 +206,9 @@ class DriverService {
       }
 
       // If updating company, check if it exists
-      if (validatedData.companyId) {
+      if (data.companyId) {
         const company = await prisma.company.findUnique({
-          where: { id: validatedData.companyId },
+          where: { id: data.companyId },
         });
 
         if (!company) {
@@ -193,12 +216,29 @@ class DriverService {
         }
       }
 
+      // If updating city, check if it exists
+      if (data.cityId) {
+        const city = await prisma.city.findUnique({
+          where: { id: data.cityId },
+        });
+
+        if (!city) {
+          throw new Error("City not found");
+        }
+      }
+
       // Update driver
       const driver = await prisma.driver.update({
         where: { id: Number(id) },
-        data: validatedData,
+        data: data,
         include: {
           company: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          city: {
             select: {
               id: true,
               name: true,
@@ -210,11 +250,6 @@ class DriverService {
 
       return driver;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
@@ -252,8 +287,6 @@ class DriverService {
 
   async updateLocation(id, locationData) {
     try {
-      const validatedData = updateLocationSchema.parse(locationData);
-
       // Check if driver exists
       const driver = await prisma.driver.findUnique({
         where: { id: Number(id) },
@@ -274,13 +307,13 @@ class DriverService {
         // Update existing location
         location = await prisma.location.update({
           where: { driverId: Number(id) },
-          data: validatedData,
+          data: locationData,
         });
       } else {
         // Create new location
         location = await prisma.location.create({
           data: {
-            ...validatedData,
+            ...locationData,
             driverId: Number(id),
           },
         });
@@ -288,22 +321,15 @@ class DriverService {
 
       return location;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
 
   async addAvailability(data) {
     try {
-      const validatedData = createAvailabilitySchema.parse(data);
-
       // Check if driver exists
       const driver = await prisma.driver.findUnique({
-        where: { id: validatedData.driverId },
+        where: { id: data.driverId },
       });
 
       if (!driver) {
@@ -314,14 +340,14 @@ class DriverService {
       const overlappingAvailability = await prisma.driverAvailability.findFirst(
         {
           where: {
-            driverId: validatedData.driverId,
+            driverId: data.driverId,
             OR: [
               {
                 startTime: {
-                  lte: new Date(validatedData.endTime),
+                  lte: new Date(data.endTime),
                 },
                 endTime: {
-                  gte: new Date(validatedData.startTime),
+                  gte: new Date(data.startTime),
                 },
               },
             ],
@@ -336,19 +362,14 @@ class DriverService {
       // Create availability
       const availability = await prisma.driverAvailability.create({
         data: {
-          driverId: validatedData.driverId,
-          startTime: new Date(validatedData.startTime),
-          endTime: new Date(validatedData.endTime),
+          driverId: data.driverId,
+          startTime: new Date(data.startTime),
+          endTime: new Date(data.endTime),
         },
       });
 
       return availability;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
@@ -365,22 +386,78 @@ class DriverService {
     }
   }
 
-  async getNearbyDrivers(lat, lng, radius = 5, companyId = null) {
-    // Using Haversine formula to calculate distance
-    // This is a simplified approach - for production, consider using more advanced geospatial queries
+  async getNearbyDrivers(
+    lat,
+    lng,
+    radius = 5,
+    companyId = null,
+    cityId = null
+  ) {
+    const whereConditions = [];
+
+    whereConditions.push(prisma.sql`d.status = 'online'`);
+
+    if (companyId) {
+      whereConditions.push(prisma.sql`d.companyId = ${companyId}`);
+    }
+
+    if (cityId) {
+      whereConditions.push(prisma.sql`d.cityId = ${cityId}`);
+    }
+
+    const whereClause =
+      whereConditions.length > 0
+        ? prisma.sql`WHERE ${prisma.sql.join(whereConditions, " AND ")}`
+        : prisma.sql``;
+
     const drivers = await prisma.$queryRaw`
-      SELECT d.*, l.*, 
+      SELECT d.*, l.*, c.name as cityName,
         (6371 * acos(cos(radians(${lat})) * cos(radians(l.lat)) * cos(radians(l.lng) - radians(${lng})) + sin(radians(${lat})) * sin(radians(l.lat)))) AS distance
       FROM driver d
       JOIN location l ON d.id = l.driverId
-      WHERE d.status = 'online'
-      ${companyId ? prisma.sql`AND d.companyId = ${companyId}` : prisma.sql``}
+      JOIN city c ON d.cityId = c.id
+      ${whereClause}
       HAVING distance < ${radius}
       ORDER BY distance
       LIMIT 20
     `;
 
     return drivers;
+  }
+
+  async getDriversByCity(cityId, status = null) {
+    try {
+      const whereClause = {
+        cityId: Number(cityId),
+      };
+
+      if (status) {
+        whereClause.status = status;
+      }
+
+      const drivers = await prisma.driver.findMany({
+        where: whereClause,
+        include: {
+          company: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          city: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          location: true,
+        },
+      });
+
+      return drivers;
+    } catch (error) {
+      throw new Error(`Failed to get drivers by city: ${error.message}`);
+    }
   }
 }
 

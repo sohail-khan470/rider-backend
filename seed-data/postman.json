@@ -1,0 +1,923 @@
+{
+    "info": {
+      "name": "ride Management API",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Authentication",
+        "item": [
+          {
+            "name": "Super Admin Login",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password123\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/auth/super-admin/login",
+                "host": ["{{baseUrl}}"],
+                "path": ["auth", "super-admin", "login"]
+              }
+            }
+          },
+          {
+            "name": "Company Login",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"email\": \"company@example.com\",\n    \"password\": \"password123\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/auth/company/login",
+                "host": ["{{baseUrl}}"],
+                "path": ["auth", "company", "login"]
+              }
+            }
+          },
+          {
+            "name": "User Login",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/auth/user/login",
+                "host": ["{{baseUrl}}"],
+                "path": ["auth", "user", "login"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Super Admin",
+        "item": [
+          {
+            "name": "Get All Companies",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{superAdminToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/super-admin/companies",
+                "host": ["{{baseUrl}}"],
+                "path": ["super-admin", "companies"]
+              }
+            }
+          },
+          {
+            "name": "Approve Company",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{superAdminToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"isApproved\": true\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/super-admin/companies/{{companyId}}/approve",
+                "host": ["{{baseUrl}}"],
+                "path": ["super-admin", "companies", "{{companyId}}", "approve"]
+              }
+            }
+          },
+          {
+            "name": "Create Super Admin",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"email\": \"newadmin@example.com\",\n    \"password\": \"securePassword123\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/super-admin/create",
+                "host": ["{{baseUrl}}"],
+                "path": ["super-admin", "create"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Companies",
+        "item": [
+          {
+            "name": "Register Company",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"ABC Transport\",\n    \"email\": \"contact@abctransport.com\",\n    \"password\": \"securePassword123\",\n    \"timezone\": \"America/New_York\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/companies/register",
+                "host": ["{{baseUrl}}"],
+                "path": ["companies", "register"]
+              }
+            }
+          },
+          {
+            "name": "Get Company Profile",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/companies/profile",
+                "host": ["{{baseUrl}}"],
+                "path": ["companies", "profile"]
+              }
+            }
+          },
+          {
+            "name": "Update Company",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"ABC Transport Updated\",\n    \"timezone\": \"Europe/London\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/companies/profile",
+                "host": ["{{baseUrl}}"],
+                "path": ["companies", "profile"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Roles & Permissions",
+        "item": [
+          {
+            "name": "Create Role",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"Manager\",\n    \"permissionIds\": [1, 2, 3, 4]\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/roles",
+                "host": ["{{baseUrl}}"],
+                "path": ["roles"]
+              }
+            }
+          },
+          {
+            "name": "Get All Roles",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/roles",
+                "host": ["{{baseUrl}}"],
+                "path": ["roles"]
+              }
+            }
+          },
+          {
+            "name": "Update Role Permissions",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"Manager Updated\",\n    \"permissionIds\": [1, 2, 3, 4, 5]\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/roles/{{roleId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["roles", "{{roleId}}"]
+              }
+            }
+          },
+          {
+            "name": "Get All Permissions",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/permissions",
+                "host": ["{{baseUrl}}"],
+                "path": ["permissions"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Users",
+        "item": [
+          {
+            "name": "Create User",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\",\n    \"roleId\": 1\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/users",
+                "host": ["{{baseUrl}}"],
+                "path": ["users"]
+              }
+            }
+          },
+          {
+            "name": "Get All Users",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/users",
+                "host": ["{{baseUrl}}"],
+                "path": ["users"]
+              }
+            }
+          },
+          {
+            "name": "Get User by ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/users/{{userId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["users", "{{userId}}"]
+              }
+            }
+          },
+          {
+            "name": "Update User",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"John Doe Updated\",\n    \"roleId\": 2\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/users/{{userId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["users", "{{userId}}"]
+              }
+            }
+          },
+          {
+            "name": "Delete User",
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/users/{{userId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["users", "{{userId}}"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Drivers",
+        "item": [
+          {
+            "name": "Create Driver",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"Michael Johnson\",\n    \"email\": \"michael@example.com\",\n    \"phone\": \"+1234567890\",\n    \"vehicleInfo\": \"Toyota Camry - ABC1234\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/drivers",
+                "host": ["{{baseUrl}}"],
+                "path": ["drivers"]
+              }
+            }
+          },
+          {
+            "name": "Get All Drivers",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/drivers",
+                "host": ["{{baseUrl}}"],
+                "path": ["drivers"]
+              }
+            }
+          },
+          {
+            "name": "Get Driver by ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/drivers/{{driverId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["drivers", "{{driverId}}"]
+              }
+            }
+          },
+          {
+            "name": "Update Driver",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"Michael J. Smith\",\n    \"phone\": \"+1987654321\",\n    \"vehicleInfo\": \"Honda Accord - XYZ9876\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/drivers/{{driverId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["drivers", "{{driverId}}"]
+              }
+            }
+          },
+          {
+            "name": "Update Driver Status",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"status\": \"online\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/drivers/{{driverId}}/status",
+                "host": ["{{baseUrl}}"],
+                "path": ["drivers", "{{driverId}}", "status"]
+              }
+            }
+          },
+          {
+            "name": "Update Driver Location",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{driverToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"lat\": 40.7128,\n    \"lng\": -74.0060\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/drivers/location",
+                "host": ["{{baseUrl}}"],
+                "path": ["drivers", "location"]
+              }
+            }
+          },
+          {
+            "name": "Add Driver Availability",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"startTime\": \"2025-05-10T09:00:00Z\",\n    \"endTime\": \"2025-05-10T17:00:00Z\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/drivers/{{driverId}}/availability",
+                "host": ["{{baseUrl}}"],
+                "path": ["drivers", "{{driverId}}", "availability"]
+              }
+            }
+          },
+          {
+            "name": "Get Driver Availability",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/drivers/{{driverId}}/availability",
+                "host": ["{{baseUrl}}"],
+                "path": ["drivers", "{{driverId}}", "availability"]
+              }
+            }
+          },
+          {
+            "name": "Delete Driver",
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/drivers/{{driverId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["drivers", "{{driverId}}"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Customers",
+        "item": [
+          {
+            "name": "Create Customer",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"Sarah Jones\",\n    \"email\": \"sarah@example.com\",\n    \"phone\": \"+1234567890\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/customers",
+                "host": ["{{baseUrl}}"],
+                "path": ["customers"]
+              }
+            }
+          },
+          {
+            "name": "Get All Customers",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/customers",
+                "host": ["{{baseUrl}}"],
+                "path": ["customers"]
+              }
+            }
+          },
+          {
+            "name": "Get Customer by ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/customers/{{customerId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["customers", "{{customerId}}"]
+              }
+            }
+          },
+          {
+            "name": "Update Customer",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"Sarah Smith\",\n    \"phone\": \"+1987654321\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/customers/{{customerId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["customers", "{{customerId}}"]
+              }
+            }
+          },
+          {
+            "name": "Delete Customer",
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/customers/{{customerId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["customers", "{{customerId}}"]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "Bookings",
+        "item": [
+          {
+            "name": "Create Booking",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"customerId\": 1,\n    \"pickup\": \"123 Main St, New York, NY\",\n    \"dropoff\": \"456 Broadway, New York, NY\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/bookings",
+                "host": ["{{baseUrl}}"],
+                "path": ["bookings"]
+              }
+            }
+          },
+          {
+            "name": "Get All Bookings",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/bookings",
+                "host": ["{{baseUrl}}"],
+                "path": ["bookings"]
+              }
+            }
+          },
+          {
+            "name": "Get Booking by ID",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/bookings/{{bookingId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["bookings", "{{bookingId}}"]
+              }
+            }
+          },
+          {
+            "name": "Assign Driver to Booking",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"driverId\": 1\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/bookings/{{bookingId}}/assign",
+                "host": ["{{baseUrl}}"],
+                "path": ["bookings", "{{bookingId}}", "assign"]
+              }
+            }
+          },
+          {
+            "name": "Update Booking Status",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"status\": \"accepted\"\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/bookings/{{bookingId}}/status",
+                "host": ["{{baseUrl}}"],
+                "path": ["bookings", "{{bookingId}}", "status"]
+              }
+            }
+          },
+          {
+            "name": "Complete Booking",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{driverToken}}"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"fare\": 25.50\n}"
+              },
+              "url": {
+                "raw": "{{baseUrl}}/bookings/{{bookingId}}/complete",
+                "host": ["{{baseUrl}}"],
+                "path": ["bookings", "{{bookingId}}", "complete"]
+              }
+            }
+          },
+          {
+            "name": "Get Driver Bookings",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{driverToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/drivers/bookings",
+                "host": ["{{baseUrl}}"],
+                "path": ["drivers", "bookings"]
+              }
+            }
+          },
+          {
+            "name": "Get Customer Bookings",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{customerToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/customers/bookings",
+                "host": ["{{baseUrl}}"],
+                "path": ["customers", "bookings"]
+              }
+            }
+          },
+          {
+            "name": "Cancel Booking",
+            "request": {
+              "method": "PATCH",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{companyToken}}"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/bookings/{{bookingId}}/cancel",
+                "host": ["{{baseUrl}}"],
+                "path": ["bookings", "{{bookingId}}", "cancel"]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "variable": [
+      {
+        "key": "baseUrl",
+        "value": "http://localhost:3000/api"
+      },
+      {
+        "key": "superAdminToken",
+        "value": "your-super-admin-token"
+      },
+      {
+        "key": "companyToken",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTMsInR5cGUiOiJ1c2VyIiwiY29tcGFueUlkIjozLCJyb2xlIjoiQWRtaW5fQ29tcGFueTMiLCJwZXJtaXNzaW9ucyI6WyJkYXNoYm9hcmQudmlldyIsImJvb2tpbmdzLmNyZWF0ZSIsImJvb2tpbmdzLnZpZXciLCJib29raW5ncy5lZGl0IiwiYm9va2luZ3MuZGVsZXRlIiwiZHJpdmVycy5jcmVhdGUiLCJkcml2ZXJzLnZpZXciLCJkcml2ZXJzLmVkaXQiLCJkcml2ZXJzLmRlbGV0ZSIsImN1c3RvbWVycy5jcmVhdGUiLCJjdXN0b21lcnMudmlldyIsImN1c3RvbWVycy5lZGl0IiwiY3VzdG9tZXJzLmRlbGV0ZSIsInVzZXJzLmNyZWF0ZSIsInVzZXJzLnZpZXciLCJ1c2Vycy5lZGl0IiwidXNlcnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicm9sZXMudmlldyIsInJvbGVzLmVkaXQiLCJyb2xlcy5kZWxldGUiXSwiaWF0IjoxNzQ2Nzc2MDUzLCJleHAiOjE3NDczODA4NTN9.AqUeIGBLerPdQ8nXTQOJuaPtOSUVLMygoAEVUifnFhM"
+      },
+      {
+        "key": "driverToken",
+        "value": "your-driver-token"
+      },
+      {
+        "key": "customerToken",
+        "value": "your-customer-token"
+      }
+    ]
+  }

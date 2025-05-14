@@ -100,7 +100,7 @@ class CompanyService {
   }
 
   async findById(id) {
-    console.log("LLLLLLLLL");
+    console.log("company service $$$");
     const company = await prisma.company.findUnique({
       where: { id: Number(id) },
       include: {
@@ -114,25 +114,7 @@ class CompanyService {
         customers: true,
         users: {
           include: {
-            role: {
-              include: {
-                permissions: {
-                  include: {
-                    permission: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        roles: {
-          include: {
-            permissions: {
-              include: {
-                permission: true,
-              },
-            },
-            users: true,
+            role: true,
           },
         },
         _count: {

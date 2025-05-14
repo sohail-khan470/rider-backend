@@ -4,7 +4,8 @@ const userService = require("./user-service");
 // Create a new user
 async function createUser(req, res, next) {
   try {
-    const user = await userService.create(req.body);
+    console.log("user-controller----------", req.body);
+    const user = await userService.create(req.body.data);
     res.status(StatusCodes.CREATED).json({
       success: true,
       message: "User created successfully",
@@ -99,7 +100,6 @@ async function authenticateUser(req, res, next) {
 async function getAdminUsers(req, res, next) {
   try {
     const { companyId } = req.params;
-    console.log(companyId);
 
     const admins = await userService.getAdmins(companyId);
 

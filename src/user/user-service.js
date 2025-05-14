@@ -24,6 +24,11 @@ const updateUserSchema = z.object({
     .int()
     .positive("Role ID must be a positive integer")
     .optional(),
+  companyId: z
+    .number()
+    .int()
+    .positive("Company id must be positive")
+    .optional(),
 });
 
 class UserService {
@@ -31,6 +36,7 @@ class UserService {
     try {
       // Validate input data
       const validatedData = createUserSchema.parse(data);
+      console.log(validatedData);
 
       // Check if user with email already exists
       const existingUser = await prisma.user.findUnique({
@@ -57,10 +63,6 @@ class UserService {
 
       if (!role) {
         throw new Error("Role not found");
-      }
-
-      if (role.companyId !== validatedData.companyId) {
-        throw new Error("Role does not belong to this company");
       }
 
       // Hash password

@@ -1,21 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const roleController = require("../controllers/roleController");
-const { validateRequest } = require("../middlewares/validationMiddleware");
-const {
-  createRoleSchema,
-  updateRoleSchema,
-} = require("../validations/roleValidation");
+const roleController = require("./roles-controller");
 
 // Role CRUD routes
-router.post("/", validateRequest(createRoleSchema), roleController.createRole);
+router.post("/", roleController.createRole);
 router.get("/", roleController.getAllRoles);
 router.get("/:id", roleController.getRoleById);
-router.put(
-  "/:id",
-  validateRequest(updateRoleSchema),
-  roleController.updateRole
-);
+router.put("/:id", roleController.updateRole);
 router.delete("/:id", roleController.deleteRole);
 
 // Permission management routes

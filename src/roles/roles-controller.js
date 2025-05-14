@@ -1,8 +1,9 @@
 const { StatusCodes } = require("http-status-codes");
-const roleService = require("../services/roleService");
+const roleService = require("./roles-service");
 
 // Create a new role
 async function createRole(req, res, next) {
+  console.log(req.body, "^^^^^^^");
   try {
     const role = await roleService.create(req.body);
     res.status(StatusCodes.CREATED).json({
@@ -17,6 +18,7 @@ async function createRole(req, res, next) {
 
 // Get all roles with optional filters and pagination
 async function getAllRoles(req, res, next) {
+  console.log(req.user, "((((((((((");
   try {
     const { page = 1, limit = 10, ...filters } = req.query;
     const pagination = {
