@@ -231,6 +231,16 @@ class CompanyService {
     const { password: _, ...companyWithoutPassword } = company;
     return companyWithoutPassword;
   }
+
+  async getCustomerByCompany(companyId) {
+    const customers = await prisma.customer.findMany({
+      where: {
+        companyId: Number(companyId),
+      },
+    });
+
+    return customers;
+  }
 }
 
 module.exports = new CompanyService();

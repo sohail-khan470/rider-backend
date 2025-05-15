@@ -18,6 +18,7 @@ const { rolesRoutes } = require("./roles");
 const { cityRoutes } = require("./city");
 const { authMiddleware } = require("./middlewares/authMiddleware");
 const { PrismaClient } = require("@prisma/client");
+const errorHandler = require("./middlewares/error-handler");
 const prisma = new PrismaClient();
 const morgan = require("morgan");
 
@@ -58,14 +59,6 @@ app.use((req, res, next) => {
 });
 
 /** Global Error Handler */
-app.use((err, req, res, next) => {
-  const status = err.status || 500;
-  res.status(status).json({
-    success: false,
-    message: err.message || "Something went wrong!",
-    error: process.env.NODE_ENV === "development" ? err : undefined,
-  });
-  console.log(err);
-});
+app.use(errorHandler);
 
 module.exports = app;

@@ -6,6 +6,7 @@ const companyController = require("./company-controller");
 // const { validateCompany } = require("../middleware/validationMiddleware");
 
 router.post("/", companyController.createCompany);
+router.get("/:companyId/customers", companyController.getCustomersByCompany);
 
 //get staff by company
 router.get("/:id/users", companyController.getStaffByCompany);

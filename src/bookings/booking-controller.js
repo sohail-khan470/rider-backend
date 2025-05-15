@@ -4,6 +4,8 @@ const bookingService = require("./booking-service");
 
 // Create a new booking
 async function createBooking(req, res, next) {
+  console.log("@Create bookings");
+  console.log(req.body);
   try {
     const booking = await bookingService.create(req.body);
 
@@ -18,7 +20,9 @@ async function createBooking(req, res, next) {
 }
 
 async function getBookingsByCompany(req, res, next) {
+  console.log("@Booking by company");
   const companyId = req.body.companyId;
+  console.log(companyId);
   try {
     const result = await bookingService.getBookingsByCompany(companyId);
 
@@ -34,14 +38,11 @@ async function getBookingsByCompany(req, res, next) {
 
 // Get all bookings with optional filters and pagination
 async function getAllBookings(req, res, next) {
+  console.log("@get all bookings");
   try {
-    const { page = 1, limit = 10, ...filters } = req.query;
-    const pagination = {
-      skip: (page - 1) * limit,
-      take: parseInt(limit),
-    };
+    const { filters } = req.query;
 
-    const result = await bookingService.findAll(filters, pagination);
+    const result = await bookingService.findAll(filters);
 
     res.status(StatusCodes.OK).json({
       success: true,
@@ -56,6 +57,7 @@ async function getAllBookings(req, res, next) {
 
 // Get a booking by ID
 async function getBookingById(req, res, next) {
+  console.log("@get single booking");
   try {
     const { id } = req.params;
     const booking = await bookingService.findById(id);
@@ -72,6 +74,7 @@ async function getBookingById(req, res, next) {
 
 // Update a booking
 async function updateBooking(req, res, next) {
+  console.log("@Update Booking");
   try {
     const { id } = req.params;
     const booking = await bookingService.update(id, req.body);
@@ -88,6 +91,7 @@ async function updateBooking(req, res, next) {
 
 // Assign a driver to a booking
 async function assignDriver(req, res, next) {
+  console.log("@Assing Driver");
   try {
     const { id } = req.params;
     const { driverId } = req.body;
@@ -107,6 +111,7 @@ async function assignDriver(req, res, next) {
       data: booking,
     });
   } catch (error) {
+    console.log(error);
     next(error);
   }
 }
@@ -160,6 +165,39 @@ async function getBookingStatistics(req, res, next) {
   }
 }
 
+// Accept a booking (new function)
+async function acceptBooking(req, res, next) {
+  try {
+    const { id } = req.params;
+    const booking = await bookingService.acceptBooking(id);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Booking accepted successfully",
+      data: booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// Complete a booking (already exists)
+async function completeBooking(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { fare } = req.body;
+    const booking = await bookingService.completeBooking(id, { fare });
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Booking completed successfully",
+      data: booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createBooking,
   getAllBookings,
@@ -167,6 +205,7 @@ module.exports = {
   updateBooking,
   assignDriver,
   cancelBooking,
+  acceptBooking, // Export the new function
   completeBooking,
   getBookingStatistics,
   getBookingsByCompany,

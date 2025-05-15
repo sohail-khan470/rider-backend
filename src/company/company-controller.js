@@ -141,6 +141,22 @@ async function getStaffByCompany(req, res, next) {
   }
 }
 
+async function getCustomersByCompany(req, res, next) {
+  console.log("@get-CustomerBy Company");
+  try {
+    const { companyId } = req.params;
+    const customers = await companyService.getCustomerByCompany(companyId);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Customers retrieved successfully",
+      customers,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createCompany,
   getAllCompanies,
@@ -150,4 +166,5 @@ module.exports = {
   approveCompany,
   loginCompany,
   getStaffByCompany,
+  getCustomersByCompany,
 };
