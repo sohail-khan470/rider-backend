@@ -267,6 +267,7 @@ class DriverService {
   }
 
   async updateStatus(id, status) {
+    console.log(id, status);
     try {
       if (!["offline", "online", "on_trip"].includes(status)) {
         throw new Error(
@@ -457,6 +458,42 @@ class DriverService {
       return drivers;
     } catch (error) {
       throw new Error(`Failed to get drivers by city: ${error.message}`);
+    }
+  }
+
+  async getDriversByCompany(companyId, status = null) {
+    console.log("&&&&&&&&& dravers");
+    try {
+      const whereClause = {
+        companyId: Number(companyId),
+      };
+
+      if (status) {
+        whereClause.status = status;
+      }
+
+      const drivers = await prisma.driver.findMany({
+        where: whereClause,
+        include: {
+          company: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          city: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          location: true,
+        },
+      });
+
+      return drivers;
+    } catch (error) {
+      throw new Error(`Failed to get drivers by company: ${error.message}`);
     }
   }
 }

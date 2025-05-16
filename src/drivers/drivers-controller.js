@@ -173,6 +173,21 @@ async function getDriversByCity(req, res, next) {
   }
 }
 
+async function getDriversByCompany(req, res, next) {
+  try {
+    const { companyId } = req.params;
+    const { status } = req.query;
+    const drivers = await driverService.getDriversByCompany(companyId, status);
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Drivers retrieved successfully",
+      drivers,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createDriver,
   getAllDrivers,
@@ -185,4 +200,5 @@ module.exports = {
   removeDriverAvailability,
   getNearbyDrivers,
   getDriversByCity,
+  getDriversByCompany,
 };

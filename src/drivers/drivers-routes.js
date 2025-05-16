@@ -22,7 +22,10 @@ router.delete("/availability/:id", driverController.removeDriverAvailability);
 // Nearby drivers route
 router.get("/nearby", driverController.getNearbyDrivers);
 
-// Drivers by city route - Note: This must be placed before the "/:id" route
+// Drivers by city route
 router.get("/city/:cityId", driverController.getDriversByCity);
+
+// Drivers by company route
+router.get("/company/:companyId", driverController.getDriversByCompany);
 
 module.exports = router;
