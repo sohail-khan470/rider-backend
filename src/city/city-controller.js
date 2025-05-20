@@ -19,16 +19,15 @@ async function createCity(req, res, next) {
 // Get all cities with pagination
 async function getAllCities(req, res, next) {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const result = await CityService.getAllCities({ page, limit });
+    const result = await CityService.getAllCities();
 
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Cities retrieved successfully",
-      data: result.data,
-      meta: result.meta,
+      result,
     });
   } catch (error) {
+    console.log(error);
     next(error);
   }
 }

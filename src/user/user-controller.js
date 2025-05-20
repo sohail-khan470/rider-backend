@@ -19,19 +19,14 @@ async function createUser(req, res, next) {
 // Get all users with filters and pagination
 async function getAllUsers(req, res, next) {
   try {
-    const { page = 1, limit = 10, ...filters } = req.query;
-    const pagination = {
-      skip: (page - 1) * limit,
-      take: parseInt(limit),
-    };
+    const { ...filters } = req.query;
 
-    const result = await userService.findAll(filters, pagination);
+    const result = await userService.findAll(filters);
 
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Users retrieved successfully",
       data: result.data,
-      pagination: result.pagination,
     });
   } catch (error) {
     next(error);

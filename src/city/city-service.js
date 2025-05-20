@@ -139,4 +139,4 @@ class CityService {
   }
 }
 
-module.exports = CityService;
+module.exports = new CityService();

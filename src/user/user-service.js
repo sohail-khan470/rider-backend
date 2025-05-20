@@ -1,46 +1,13 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
-const { z } = require("zod");
 const prisma = new PrismaClient();
-
-// Validation schemas
-const createUserSchema = z.object({
-  name: z.string().min(2, "User name must be at least 2 characters"),
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  roleId: z.number().int().positive("Role ID must be a positive integer"),
-  companyId: z.number().int().positive("Company ID must be a positive integer"),
-});
-
-const updateUserSchema = z.object({
-  name: z.string().min(2, "User name must be at least 2 characters").optional(),
-  email: z.string().email("Invalid email format").optional(),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .optional(),
-  roleId: z
-    .number()
-    .int()
-    .positive("Role ID must be a positive integer")
-    .optional(),
-  companyId: z
-    .number()
-    .int()
-    .positive("Company id must be positive")
-    .optional(),
-});
 
 class UserService {
   async create(data) {
     try {
-      // Validate input data
-      const validatedData = createUserSchema.parse(data);
-      console.log(validatedData);
-
       // Check if user with email already exists
       const existingUser = await prisma.user.findUnique({
-        where: { email: validatedData.email },
+        where: { email: data.email },
       });
 
       if (existingUser) {
@@ -49,7 +16,7 @@ class UserService {
 
       // Check if company exists
       const company = await prisma.company.findUnique({
-        where: { id: validatedData.companyId },
+        where: { id: data.companyId },
       });
 
       if (!company) {
@@ -58,7 +25,7 @@ class UserService {
 
       // Check if role exists and belongs to the company
       const role = await prisma.role.findUnique({
-        where: { id: validatedData.roleId },
+        where: { id: data.roleId },
       });
 
       if (!role) {
@@ -66,12 +33,12 @@ class UserService {
       }
 
       // Hash password
-      const hashedPassword = await bcrypt.hash(validatedData.password, 10);
+      const hashedPassword = await bcrypt.hash(data.password, 10);
 
       // Create user
       const user = await prisma.user.create({
         data: {
-          ...validatedData,
+          ...data,
           password: hashedPassword,
         },
         include: {
@@ -97,20 +64,13 @@ class UserService {
       const { password, ...userWithoutPassword } = user;
       return userWithoutPassword;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
 
-  async findAll(filters = {}, pagination = { skip: 0, take: 10 }) {
+  async findAll(filters = {}) {
     const users = await prisma.user.findMany({
       where: filters,
-      skip: pagination.skip,
-      take: pagination.take,
       select: {
         id: true,
         name: true,
@@ -131,16 +91,7 @@ class UserService {
       },
     });
 
-    const total = await prisma.user.count({ where: filters });
-
-    return {
-      data: users,
-      pagination: {
-        total,
-        page: Math.floor(pagination.skip / pagination.take) + 1,
-        pageSize: pagination.take,
-      },
-    };
+    return users;
   }
 
   async findById(id) {
@@ -178,10 +129,6 @@ class UserService {
 
   async update(id, data) {
     try {
-      // Validate input data
-      const validatedData = updateUserSchema.parse(data);
-
-      // Get current user
       const currentUser = await prisma.user.findUnique({
         where: { id: Number(id) },
       });
@@ -190,11 +137,10 @@ class UserService {
         throw new Error("User not found");
       }
 
-      // If updating email, check if it's already taken
-      if (validatedData.email) {
+      if (data.email) {
         const existingUser = await prisma.user.findFirst({
           where: {
-            email: validatedData.email,
+            email: data.email,
             id: { not: Number(id) },
           },
         });
@@ -204,10 +150,9 @@ class UserService {
         }
       }
 
-      // If updating role, check if it exists and belongs to the same company
-      if (validatedData.roleId) {
+      if (data.roleId) {
         const role = await prisma.role.findUnique({
-          where: { id: validatedData.roleId },
+          where: { id: data.roleId },
         });
 
         if (!role) {
@@ -219,15 +164,13 @@ class UserService {
         }
       }
 
-      // Hash password if provided
-      if (validatedData.password) {
-        validatedData.password = await bcrypt.hash(validatedData.password, 10);
+      if (data.password) {
+        data.password = await bcrypt.hash(data.password, 10);
       }
 
-      // Update user
       const user = await prisma.user.update({
         where: { id: Number(id) },
-        data: validatedData,
+        data,
         select: {
           id: true,
           name: true,
@@ -253,11 +196,6 @@ class UserService {
 
       return user;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
@@ -311,10 +249,8 @@ class UserService {
       throw new Error("Your company account has not been approved yet");
     }
 
-    // Extract permissions
     const permissions = user.role.permissions.map((p) => p.permission.name);
 
-    // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
     return {
@@ -325,7 +261,6 @@ class UserService {
 
   async getAdmins(companyId) {
     try {
-      // Find the Admin role first
       const adminRole = await prisma.role.findFirst({
         where: {
           name: "Admin",
@@ -337,7 +272,6 @@ class UserService {
         return [];
       }
 
-      // Find all users with the Admin role
       const adminUsers = await prisma.user.findMany({
         where: {
           roleId: adminRole.id,
