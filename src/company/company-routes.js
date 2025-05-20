@@ -27,4 +27,6 @@ router.delete("/:id", companyController.deleteCompany);
 
 router.patch("/:id/approve", companyController.approveCompany);
 
+router.patch("/staff/:id", companyController.updateStaff);
+
 module.exports = router;

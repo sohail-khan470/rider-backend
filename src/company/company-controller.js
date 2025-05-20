@@ -157,6 +157,21 @@ async function getCustomersByCompany(req, res, next) {
   }
 }
 
+async function updateStaff(req, res, next) {
+  try {
+    const { id } = req.params;
+    const staff = await companyService.updateStaff(id, req.body);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Staff updated successfully",
+      staff,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createCompany,
   getAllCompanies,
@@ -167,4 +182,5 @@ module.exports = {
   loginCompany,
   getStaffByCompany,
   getCustomersByCompany,
+  updateStaff,
 };

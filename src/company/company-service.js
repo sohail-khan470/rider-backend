@@ -241,6 +241,39 @@ class CompanyService {
 
     return customers;
   }
+
+  async updateStaff(staffId, data) {
+    try {
+      // Optional: validate input if needed with zod or other schema
+
+      // Check if staff exists
+      const existingStaff = await prisma.user.findUnique({
+        where: { id: Number(staffId) },
+      });
+
+      if (!existingStaff) {
+        throw new Error("Staff not found");
+      }
+
+      // Optionally hash password if included
+      if (data.password) {
+        data.password = await bcrypt.hash(data.password, 10);
+      }
+
+      // Update staff member
+      const updatedStaff = await prisma.user.update({
+        where: { id: Number(staffId) },
+        data,
+        include: {
+          role: true, // if you want to include role or other relations
+        },
+      });
+
+      return updatedStaff;
+    } catch (error) {
+      throw new Error(`Failed to update staff: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new CompanyService();
