@@ -17,6 +17,20 @@ async function createCompany(req, res, next) {
   }
 }
 
+async function editCompany(req, res, next) {
+  try {
+    const { id } = req.params;
+    const company = await companyService.edit(id, req.body);
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Company updated successfully",
+      data: company,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 // Get all companies with optional filters and pagination
 async function getAllCompanies(req, res, next) {
   try {
@@ -73,6 +87,7 @@ async function updateCompany(req, res, next) {
 
 // Delete a company
 async function deleteCompany(req, res, next) {
+  console.log("delete company");
   try {
     const { id } = req.params;
     const result = await companyService.delete(id);

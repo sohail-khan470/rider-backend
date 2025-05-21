@@ -2,16 +2,12 @@ const express = require("express");
 const router = express.Router();
 
 const companyController = require("./company-controller");
-// const { authenticate } = require("../middleware/authMiddleware");
-// const { validateCompany } = require("../middleware/validationMiddleware");
 
-router.post("/", companyController.createCompany);
+router.post("/register", companyController.createCompany);
 router.get("/:companyId/customers", companyController.getCustomersByCompany);
 
 //get staff by company
 router.get("/:id/users", companyController.getStaffByCompany);
-
-router.post("/login", companyController.loginCompany);
 
 router.get("/", companyController.getAllCompanies);
 
@@ -22,6 +18,7 @@ router.put(
 
   companyController.updateCompany
 );
+router.patch("/:id", companyController.updateCompany);
 
 router.delete("/:id", companyController.deleteCompany);
 

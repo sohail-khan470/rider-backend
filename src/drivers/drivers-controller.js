@@ -110,6 +110,7 @@ async function updateDriverLocation(req, res, next) {
 
 // Add driver availability
 async function addDriverAvailability(req, res, next) {
+  console.log("@Driver Avaliability");
   try {
     const availability = await driverService.addAvailability(req.body);
     res.status(StatusCodes.CREATED).json({
@@ -118,6 +119,7 @@ async function addDriverAvailability(req, res, next) {
       data: availability,
     });
   } catch (error) {
+    console.log(error);
     next(error);
   }
 }

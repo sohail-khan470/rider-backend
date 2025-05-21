@@ -1,53 +1,25 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
-const { z } = require("zod");
+
 const prisma = new PrismaClient();
-
-// Validation schemas
-const createCompanySchema = z.object({
-  name: z.string().min(2, "Company name must be at least 2 characters"),
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  timezone: z.string().optional().default("UTC"),
-});
-
-const updateCompanySchema = z.object({
-  name: z
-    .string()
-    .min(2, "Company name must be at least 2 characters")
-    .optional(),
-  email: z.string().email("Invalid email format").optional(),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .optional(),
-  isApproved: z.boolean().optional(),
-  timezone: z.string().optional(),
-});
 
 class CompanyService {
   async create(data) {
     try {
-      // Validate input data
-      const validatedData = createCompanySchema.parse(data);
-
       // Check if company with email already exists
       const existingCompany = await prisma.company.findUnique({
-        where: { email: validatedData.email },
+        where: { email: data.email },
       });
 
       if (existingCompany) {
         throw new Error("Company with this email already exists");
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(validatedData.password, 10);
-
       // Create company
       const company = await prisma.company.create({
         data: {
-          ...validatedData,
-          password: hashedPassword,
+          ...data,
+          timezone: data.timezone || "UTC",
         },
       });
 
@@ -55,11 +27,6 @@ class CompanyService {
       const { password, ...companyWithoutPassword } = company;
       return companyWithoutPassword;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
@@ -100,7 +67,6 @@ class CompanyService {
   }
 
   async findById(id) {
-    console.log("company service $$$");
     const company = await prisma.company.findUnique({
       where: { id: Number(id) },
       include: {
@@ -137,14 +103,11 @@ class CompanyService {
 
   async update(id, data) {
     try {
-      // Validate input data
-      const validatedData = updateCompanySchema.parse(data);
-
       // If updating email, check if it's already taken
-      if (validatedData.email) {
+      if (data.email) {
         const existingCompany = await prisma.company.findFirst({
           where: {
-            email: validatedData.email,
+            email: data.email,
             id: { not: Number(id) },
           },
         });
@@ -155,14 +118,13 @@ class CompanyService {
       }
 
       // Hash password if provided
-      if (validatedData.password) {
-        validatedData.password = await bcrypt.hash(validatedData.password, 10);
+      if (data.password) {
+        data.password = await bcrypt.hash(data.password, 10);
       }
 
-      // Update company
       const company = await prisma.company.update({
         where: { id: Number(id) },
-        data: validatedData,
+        data,
         select: {
           id: true,
           name: true,
@@ -175,11 +137,6 @@ class CompanyService {
 
       return company;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
@@ -198,7 +155,7 @@ class CompanyService {
 
   async approveCompany(id) {
     try {
-      const company = await prisma.company.update({
+      await prisma.company.update({
         where: { id: Number(id) },
         data: { isApproved: true },
       });
@@ -244,9 +201,6 @@ class CompanyService {
 
   async updateStaff(staffId, data) {
     try {
-      // Optional: validate input if needed with zod or other schema
-
-      // Check if staff exists
       const existingStaff = await prisma.user.findUnique({
         where: { id: Number(staffId) },
       });
@@ -255,23 +209,33 @@ class CompanyService {
         throw new Error("Staff not found");
       }
 
-      // Optionally hash password if included
       if (data.password) {
         data.password = await bcrypt.hash(data.password, 10);
       }
 
-      // Update staff member
       const updatedStaff = await prisma.user.update({
         where: { id: Number(staffId) },
         data,
         include: {
-          role: true, // if you want to include role or other relations
+          role: true,
         },
       });
 
       return updatedStaff;
     } catch (error) {
       throw new Error(`Failed to update staff: ${error.message}`);
+    }
+  }
+
+  async edit(id, data) {
+    try {
+      const company = await prisma.company.update({
+        where: { id: Number(id) },
+        data,
+      });
+      return company;
+    } catch (error) {
+      throw new Error(`Failed to update company: ${error.message}`);
     }
   }
 }

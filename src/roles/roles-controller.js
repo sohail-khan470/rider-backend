@@ -18,7 +18,6 @@ async function createRole(req, res, next) {
 
 // Get all roles with optional filters and pagination
 async function getAllRoles(req, res, next) {
-  console.log(req.user, "((((((((((");
   try {
     const { page = 1, limit = 10, ...filters } = req.query;
     const pagination = {
