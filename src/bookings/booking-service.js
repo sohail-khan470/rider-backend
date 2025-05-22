@@ -349,6 +349,25 @@ class BookingService {
       throw new Error(`Failed to accept booking: ${error.message}`);
     }
   }
+
+  async startTrip(id) {
+    try {
+      const booking = await prisma.booking.findUnique({
+        where: { id: Number(id) },
+      });
+      if (!booking) throw new Error("Booking not found");
+      if (booking.status !== "accepted") {
+        throw new Error("Only accepted bookings can be started");
+      }
+      const updatedBooking = await prisma.booking.update({
+        where: { id: Number(id) },
+        data: { status: "ongoing" },
+      });
+      return updatedBooking;
+    } catch (error) {
+      throw new Error(`Failed to start trip: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new BookingService();

@@ -24,7 +24,15 @@ const morgan = require("morgan");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+// app.use(cors());
+
+app.use(
+  cors({
+    origin: "*", // or use '*' for all origins (not recommended for production)
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+    credentials: true, // only if you're using cookies or sessions
+  })
+);
 
 /** Health Check */
 app.get("/", (req, res) => {

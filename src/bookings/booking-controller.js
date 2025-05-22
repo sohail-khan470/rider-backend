@@ -1,6 +1,7 @@
 // src/controllers/bookingController.js
 const { StatusCodes } = require("http-status-codes");
 const bookingService = require("./booking-service");
+const { param } = require("./booking-routes");
 
 // Create a new booking
 async function createBooking(req, res, next) {
@@ -174,7 +175,7 @@ async function acceptBooking(req, res, next) {
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Booking accepted successfully",
-      data: booking,
+      booking,
     });
   } catch (error) {
     next(error);
@@ -198,6 +199,21 @@ async function completeBooking(req, res, next) {
   }
 }
 
+async function startTrip(req, res, next) {
+  const id = req.params.id;
+  try {
+    const booking = await bookingService.startTrip(id);
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Trip started successfully",
+      booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createBooking,
   getAllBookings,
@@ -209,4 +225,5 @@ module.exports = {
   completeBooking,
   getBookingStatistics,
   getBookingsByCompany,
+  startTrip,
 };

@@ -13,6 +13,7 @@ router.patch("/:id/assign", bookingController.assignDriver);
 router.patch("/:id/cancel", bookingController.cancelBooking);
 router.patch("/:id/accept", bookingController.acceptBooking); // New endpoint
 router.patch("/:id/complete", bookingController.completeBooking);
+router.patch("/:id/start", bookingController.startTrip);
 
 router.get("/stats/:companyId", bookingController.getBookingStatistics);
 

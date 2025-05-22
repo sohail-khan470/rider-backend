@@ -34,7 +34,7 @@ const authMiddleware = async (req, res, next) => {
     req.user = {
       userId: decoded.id,
       companyId: decoded.companyId,
-      role: "companyAdmin",
+      role: "company_admin",
     };
 
     next();

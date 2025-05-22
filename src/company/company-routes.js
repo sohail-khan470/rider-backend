@@ -8,7 +8,7 @@ router.get("/:companyId/customers", companyController.getCustomersByCompany);
 
 //get staff by company
 router.get("/:id/users", companyController.getStaffByCompany);
-
+router.get("/me", companyController.getCompanyProfile);
 router.get("/", companyController.getAllCompanies);
 
 router.get("/:id", companyController.getCompanyById);

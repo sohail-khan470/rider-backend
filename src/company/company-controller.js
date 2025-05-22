@@ -187,6 +187,22 @@ async function updateStaff(req, res, next) {
   }
 }
 
+async function getCompanyProfile(req, res, next) {
+  const companyID = req.user.companyId;
+  try {
+    if (companyID) {
+      const company = await companyService.findById(companyID);
+      res.status(StatusCodes.OK).json({
+        success: true,
+        message: "Company retrieved successfully",
+        company,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createCompany,
   getAllCompanies,
@@ -198,4 +214,5 @@ module.exports = {
   getStaffByCompany,
   getCustomersByCompany,
   updateStaff,
+  getCompanyProfile,
 };
