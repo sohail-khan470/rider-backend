@@ -1,13 +1,30 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
+const fullBookingInclude = {
+  customer: true,
+  driver: {
+    include: {
+      location: true,
+      city: true,
+    },
+  },
+  company: {
+    include: {
+      contact: true,
+      addresses: true,
+      profile: true,
+    },
+  },
+};
 
 class BookingService {
   async getBookingsByCompany(companyId) {
     try {
       const data = await prisma.booking.findMany({
         where: { companyId: Number(companyId) },
+        include: fullBookingInclude,
       });
-      console.log(data);
+
       return data;
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -16,7 +33,6 @@ class BookingService {
   }
 
   async create(data) {
-    console.log(data);
     try {
       // Check if customer exists and belongs to the company
       const customer = await prisma.customer.findUnique({
@@ -64,13 +80,7 @@ class BookingService {
     const bookings = await prisma.booking.findMany({
       where: filters,
       orderBy: { requestedAt: "desc" },
-      include: {
-        customer: { select: { id: true, name: true, phone: true } },
-        driver: {
-          select: { id: true, name: true, phone: true, vehicleInfo: true },
-        },
-        company: { select: { id: true, name: true } },
-      },
+      include: fullBookingInclude,
     });
     const total = await prisma.booking.count({ where: filters });
     return { data: bookings, total };
@@ -79,11 +89,7 @@ class BookingService {
   async findById(id) {
     const booking = await prisma.booking.findUnique({
       where: { id: Number(id) },
-      include: {
-        customer: true,
-        driver: true,
-        company: { select: { id: true, name: true } },
-      },
+      include: fullBookingInclude,
     });
     if (!booking) throw new Error("Booking not found");
     return booking;
@@ -144,11 +150,7 @@ class BookingService {
       const booking = await prisma.booking.update({
         where: { id: Number(id) },
         data,
-        include: {
-          customer: true,
-          driver: true,
-          company: { select: { id: true, name: true } },
-        },
+        include: fullBookingInclude,
       });
       return booking;
     } catch (error) {
@@ -190,7 +192,7 @@ class BookingService {
       ]);
       return updatedBooking;
     } catch (error) {
-      throw new Error(`Failed to assign driver: ${error.message}`);
+      throw error;
     }
   }
 
@@ -198,7 +200,7 @@ class BookingService {
     try {
       const booking = await prisma.booking.findUnique({
         where: { id: Number(id) },
-        include: { driver: true },
+        include: fullBookingInclude,
       });
       if (!booking) throw new Error("Booking not found");
       if (["completed", "cancelled"].includes(booking.status)) {
@@ -209,14 +211,20 @@ class BookingService {
       const updatedBooking = await prisma.booking.update({
         where: { id: Number(id) },
         data: { status: "cancelled" },
+        include: fullBookingInclude,
       });
       if (booking.driverId) {
         await prisma.driver.update({
           where: { id: booking.driverId },
           data: { status: "online" },
+          include: fullBookingInclude,
         });
       }
-      return { success: true, message: "Booking cancelled successfully" };
+      return {
+        success: true,
+        message: "Booking cancelled successfully",
+        updatedBooking,
+      };
     } catch (error) {
       throw new Error(`Failed to cancel booking: ${error.message}`);
     }
@@ -226,6 +234,7 @@ class BookingService {
     try {
       const booking = await prisma.booking.findUnique({
         where: { id: Number(id) },
+        include: fullBookingInclude,
       });
       if (!booking) throw new Error("Booking not found");
       if (booking.status !== "ongoing")
@@ -233,6 +242,7 @@ class BookingService {
       const updatedBooking = await prisma.booking.update({
         where: { id: Number(id) },
         data: { status: "completed", fare: fareData.fare || booking.fare },
+        include: fullBookingInclude,
       });
       if (booking.driverId) {
         await prisma.driver.update({
@@ -291,39 +301,39 @@ class BookingService {
     }
   }
 
-  async cancelBooking(id) {
-    try {
-      const booking = await prisma.booking.findUnique({
-        where: { id: Number(id) },
-        include: { driver: true },
-      });
-      if (!booking) throw new Error("Booking not found");
-      if (["completed", "cancelled"].includes(booking.status)) {
-        throw new Error(
-          "Cannot cancel a booking that is already completed or cancelled"
-        );
-      }
-      const updatedBooking = await prisma.booking.update({
-        where: { id: Number(id) },
-        data: { status: "cancelled" },
-      });
-      if (booking.driverId) {
-        await prisma.driver.update({
-          where: { id: booking.driverId },
-          data: { status: "online" },
-        });
-      }
-      return updatedBooking;
-    } catch (error) {
-      throw new Error(`Failed to cancel booking: ${error.message}`);
-    }
-  }
+  // async cancelBooking(id) {
+  //   try {
+  //     const booking = await prisma.booking.findUnique({
+  //       where: { id: Number(id) },
+  //       include: { driver: true },
+  //     });
+  //     if (!booking) throw new Error("Booking not found");
+  //     if (["completed", "cancelled"].includes(booking.status)) {
+  //       throw new Error(
+  //         "Cannot cancel a booking that is already completed or cancelled"
+  //       );
+  //     }
+  //     const updatedBooking = await prisma.booking.update({
+  //       where: { id: Number(id) },
+  //       data: { status: "cancelled" },
+  //     });
+  //     if (booking.driverId) {
+  //       await prisma.driver.update({
+  //         where: { id: booking.driverId },
+  //         data: { status: "online" },
+  //       });
+  //     }
+  //     return updatedBooking;
+  //   } catch (error) {
+  //     throw new Error(`Failed to cancel booking: ${error.message}`);
+  //   }
+  // }
 
   async acceptBooking(id) {
     try {
       const booking = await prisma.booking.findUnique({
         where: { id: Number(id) },
-        include: { driver: true },
+        include: fullBookingInclude,
       });
       if (!booking) throw new Error("Booking not found");
       if (booking.status !== "pending") {
@@ -336,6 +346,7 @@ class BookingService {
       const updatedBooking = await prisma.booking.update({
         where: { id: Number(id) },
         data: { status: "accepted" },
+        include: fullBookingInclude,
       });
 
       // Update driver status to "on_trip"
@@ -362,6 +373,7 @@ class BookingService {
       const updatedBooking = await prisma.booking.update({
         where: { id: Number(id) },
         data: { status: "ongoing" },
+        include: fullBookingInclude,
       });
       return updatedBooking;
     } catch (error) {

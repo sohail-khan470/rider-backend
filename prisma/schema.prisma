@@ -17,21 +17,6 @@ model SuperAdmin {
   @@map("super_admin")
 }
 
-model Company {
-  id         Int        @id @default(autoincrement())
-  name       String
-  email      String     @unique
-  isApproved Boolean    @default(false)
-  createdAt  DateTime   @default(now())
-  timezone   String     @default("UTC")
-  bookings   Booking[]
-  drivers    Driver[]
-  customers  Customer[]
-  users      User[]
-
-  @@map("company")
-}
-
 model User {
   id        Int      @id @default(autoincrement())
   name      String
@@ -161,6 +146,89 @@ model Location {
   driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
 
   @@map("location")
+}
+
+model CompanyContact {
+  id        Int      @id @default(autoincrement())
+  companyId Int      @unique
+  company   Company  @relation(fields: [companyId], references: [id])
+  phone     String
+  email     String   @unique
+  website   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("company_contact")
+}
+
+model CompanyAddress {
+  id         Int      @id @default(autoincrement())
+  companyId  Int
+  company    Company  @relation(fields: [companyId], references: [id])
+  street     String
+  city       String
+  state      String
+  country    String
+  postalCode String
+  isPrimary  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("company_address")
+}
+
+model CompanyMedia {
+  id        Int       @id @default(autoincrement())
+  companyId Int
+  company   Company   @relation(fields: [companyId], references: [id])
+  type      MediaType // enum for logo, banner, etc.
+  url       String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("company_media")
+}
+
+model CompanyProfile {
+  id          Int      @id @default(autoincrement())
+  companyId   Int      @unique
+  company     Company  @relation(fields: [companyId], references: [id])
+  description String
+  mission     String?
+  vision      String?
+  values      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("company_profile")
+}
+
+model Company {
+  id         Int      @id @default(autoincrement())
+  name       String
+  isApproved Boolean  @default(false)
+  timezone   String   @default("UTC")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  contact   CompanyContact?
+  addresses CompanyAddress[]
+  media     CompanyMedia[]
+  profile   CompanyProfile?
+  bookings  Booking[]
+  drivers   Driver[]
+  customers Customer[]
+  users     User[]
+
+  @@map("company")
+}
+
+enum MediaType {
+  LOGO
+  BANNER
+  DOCUMENT
+  OTHER
 }
 
 enum BookingStatus {

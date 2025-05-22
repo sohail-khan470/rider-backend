@@ -13,7 +13,7 @@ async function createBooking(req, res, next) {
     res.status(StatusCodes.CREATED).json({
       success: true,
       message: "Booking created successfully",
-      data: booking,
+      booking,
     });
   } catch (error) {
     next(error);
@@ -49,7 +49,6 @@ async function getAllBookings(req, res, next) {
       success: true,
       message: "Bookings retrieved successfully",
       data: result.data,
-      pagination: result.pagination,
     });
   } catch (error) {
     next(error);
@@ -66,7 +65,7 @@ async function getBookingById(req, res, next) {
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Booking retrieved successfully",
-      data: booking,
+      booking,
     });
   } catch (error) {
     next(error);
@@ -126,6 +125,7 @@ async function cancelBooking(req, res, next) {
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Booking cancelled successfully",
+      result,
     });
   } catch (error) {
     next(error);

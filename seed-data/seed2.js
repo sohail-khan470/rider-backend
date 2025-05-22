@@ -1,531 +1,1171 @@
-// prisma/europeSeed.js
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcrypt");
+
 const prisma = new PrismaClient();
 
-async function seedEuropeanData() {
-  console.log("Starting European database seeding...");
+async function main() {
+  console.log("🌱 Adding additional data to existing companies...");
 
-  // We won't clean existing data, just add new entries
-
-  // Create European Cities
-  console.log("Creating European cities...");
-  const europeanCities = await Promise.all([
-    prisma.city.create({ data: { name: "Paris" } }),
-    prisma.city.create({ data: { name: "Berlin" } }),
-    prisma.city.create({ data: { name: "Madrid" } }),
-    prisma.city.create({ data: { name: "Rome" } }),
-    prisma.city.create({ data: { name: "Amsterdam" } }),
-    prisma.city.create({ data: { name: "Vienna" } }),
-    prisma.city.create({ data: { name: "Brussels" } }),
-    prisma.city.create({ data: { name: "Stockholm" } }),
-    prisma.city.create({ data: { name: "Prague" } }),
-    prisma.city.create({ data: { name: "Barcelona" } }),
-  ]);
-
-  // Get existing roles (we'll reuse them)
-  console.log("Fetching existing roles...");
-  const roles = {
-    admin: await prisma.role.findFirst({ where: { name: "admin" } }),
-    dispatcher: await prisma.role.findFirst({ where: { name: "dispatcher" } }),
-    analyst: await prisma.role.findFirst({ where: { name: "analyst" } }),
+  // Hash password function
+  const hashPassword = async (password) => {
+    return await bcrypt.hash(password, 10);
   };
 
-  // Create European Companies
-  console.log("Creating European companies...");
-  const europeanCompanies = await Promise.all([
-    prisma.company.create({
-      data: {
-        name: "EuroRides",
-        email: "info@eurorides.eu",
-        isApproved: true,
-        timezone: "Europe/Paris",
-      },
-    }),
-    prisma.company.create({
-      data: {
-        name: "GermanWheels",
-        email: "kontakt@germanwheels.de",
-        isApproved: true,
-        timezone: "Europe/Berlin",
-      },
-    }),
-    prisma.company.create({
-      data: {
-        name: "ItalianTransfers",
-        email: "info@italiantransfers.it",
-        isApproved: true,
-        timezone: "Europe/Rome",
-      },
-    }),
-    prisma.company.create({
-      data: {
-        name: "SpanishCab",
-        email: "hola@spanishcab.es",
-        isApproved: false,
-        timezone: "Europe/Madrid",
-      },
-    }),
-  ]);
+  // Get existing companies and cities
+  const companies = await prisma.company.findMany({
+    include: {
+      contact: true,
+      addresses: true,
+    },
+  });
 
-  // Create Users for European companies
-  console.log("Creating European users...");
-  const europeanUsers = [];
-  for (const company of europeanCompanies) {
-    // Admin for each company
-    europeanUsers.push(
-      await prisma.user.create({
-        data: {
-          name: `Admin ${company.name}`,
-          email: `admin@${company.name.toLowerCase().replace(/\s+/g, "")}.com`,
-          password: await bcrypt.hash("Password123", 10),
-          companyId: company.id,
-          roleId: roles.admin.id,
-        },
-      })
-    );
+  const cities = await prisma.city.findMany();
+  const roles = await prisma.role.findMany();
 
-    // Dispatcher for each company
-    europeanUsers.push(
-      await prisma.user.create({
-        data: {
-          name: `Dispatcher ${company.name}`,
-          email: `dispatcher@${company.name
-            .toLowerCase()
-            .replace(/\s+/g, "")}.com`,
-          password: await bcrypt.hash("Password123", 10),
-          companyId: company.id,
-          roleId: roles.dispatcher.id,
-        },
-      })
-    );
+  console.log(`Found ${companies.length} companies:`);
+  companies.forEach((c) => console.log(`- ${c.name}`));
 
-    // Analyst for each company
-    europeanUsers.push(
-      await prisma.user.create({
-        data: {
-          name: `Analyst ${company.name}`,
-          email: `analyst@${company.name
-            .toLowerCase()
-            .replace(/\s+/g, "")}.com`,
-          password: await bcrypt.hash("Password123", 10),
-          companyId: company.id,
-          roleId: roles.analyst.id,
-        },
-      })
-    );
-  }
+  console.log(`Found ${cities.length} cities:`);
+  cities.forEach((c) => console.log(`- ${c.name}`));
 
-  // European Drivers Data - Realistic names and vehicles
-  console.log("Creating European drivers...");
-  const europeanDrivers = [];
+  console.log(`Found ${roles.length} roles:`);
+  roles.forEach((r) => console.log(`- ${r.name}`));
 
-  // Sample driver data by country
-  const driverData = {
-    EuroRides: [
-      {
-        name: "Antoine Lefevre",
-        email: "antoine@drivers.eurorides.eu",
-        phone: "+33612345678",
-        vehicle: "Renault Megane, White, License: 5432ABC",
-        cityName: "Paris",
-      },
-      {
-        name: "Mathilde Rousseau",
-        email: "mathilde@drivers.eurorides.eu",
-        phone: "+33623456789",
-        vehicle: "Peugeot 308, Black, License: 7654CBA",
-        cityName: "Paris",
-      },
-      {
-        name: "Jean Dupont",
-        email: "jean@drivers.eurorides.eu",
-        phone: "+33634567890",
-        vehicle: "Citroën C4, Silver, License: 8765DEF",
-        cityName: "Paris",
-      },
-    ],
-    GermanWheels: [
-      {
-        name: "Klaus Weber",
-        email: "klaus@drivers.germanwheels.de",
-        phone: "+491234567890",
-        vehicle: "Volkswagen Passat, Silver, License: B-KW-1234",
-        cityName: "Berlin",
-      },
-      {
-        name: "Ursula Schneider",
-        email: "ursula@drivers.germanwheels.de",
-        phone: "+491567890123",
-        vehicle: "Mercedes C-Class, Black, License: B-US-5678",
-        cityName: "Berlin",
-      },
-      {
-        name: "Hans Mueller",
-        email: "hans@drivers.germanwheels.de",
-        phone: "+491789012345",
-        vehicle: "BMW 3 Series, Blue, License: B-HM-9012",
-        cityName: "Berlin",
-      },
-    ],
-    ItalianTransfers: [
-      {
-        name: "Roberto Bianchi",
-        email: "roberto@drivers.italiantransfers.it",
-        phone: "+393456789012",
-        vehicle: "Fiat 500, Red, License: RM456789",
-        cityName: "Rome",
-      },
-      {
-        name: "Francesca Conti",
-        email: "francesca@drivers.italiantransfers.it",
-        phone: "+393212345678",
-        vehicle: "Alfa Romeo Giulia, Blue, License: RM789012",
-        cityName: "Rome",
-      },
-      {
-        name: "Marco Rossi",
-        email: "marco@drivers.italiantransfers.it",
-        phone: "+393678901234",
-        vehicle: "Lancia Ypsilon, White, License: RM345678",
-        cityName: "Rome",
-      },
-    ],
-    SpanishCab: [
-      {
-        name: "Carlos Hernández",
-        email: "carlos@drivers.spanishcab.es",
-        phone: "+34612345678",
-        vehicle: "Seat Leon, Gray, License: 1234-BCN",
-        cityName: "Madrid",
-      },
-      {
-        name: "Isabella Gomez",
-        email: "isabella@drivers.spanishcab.es",
-        phone: "+34698765432",
-        vehicle: "Seat Ibiza, White, License: 5678-MAD",
-        cityName: "Madrid",
-      },
-      {
-        name: "Miguel Rodriguez",
-        email: "miguel@drivers.spanishcab.es",
-        phone: "+34654321098",
-        vehicle: "Renault Clio, Red, License: 9012-MAD",
-        cityName: "Barcelona",
-      },
-    ],
+  // Helper function to get company by name
+  const getCompany = (name) => {
+    const company = companies.find((c) => c.name === name);
+    if (!company) {
+      console.error(`❌ Company not found: ${name}`);
+      return null;
+    }
+    return company;
   };
 
-  const driverStatuses = ["offline", "online", "on_trip"];
+  const getCity = (name) => {
+    const city = cities.find((c) => c.name === name);
+    if (!city) {
+      console.error(`❌ City not found: ${name}`);
+      return null;
+    }
+    return city;
+  };
 
-  for (const company of europeanCompanies) {
-    if (!company.isApproved && company.name === "SpanishCab") continue; // Skip unapproved companies
+  const getRole = (name) => {
+    const role = roles.find((r) => r.name === name);
+    if (!role) {
+      console.error(`❌ Role not found: ${name}`);
+      return null;
+    }
+    return role;
+  };
 
-    const companyDrivers = driverData[company.name] || [];
+  // Additional Italian Drivers
+  const additionalItalianDrivers = [
+    // Roma Taxi Service - Additional drivers
+    {
+      name: "Francesco Rizzo",
+      email: "francesco.rizzo@driver.it",
+      phone: "+39 333 7890123",
+      vehicle: "Toyota Prius Hybrid - Green",
+      company: "Roma Taxi Service",
+      status: "online",
+    },
+    {
+      name: "Andrea Vitale",
+      email: "andrea.vitale@driver.it",
+      phone: "+39 333 8901234",
+      vehicle: "Nissan Leaf - Electric Blue",
+      company: "Roma Taxi Service",
+      status: "offline",
+    },
+    {
+      name: "Salvatore Russo",
+      email: "salvatore.russo@driver.it",
+      phone: "+39 333 9012345",
+      vehicle: "Renault Captur - Orange",
+      company: "Roma Taxi Service",
+      status: "on_trip",
+    },
+    {
+      name: "Vincenzo Serra",
+      email: "vincenzo.serra@driver.it",
+      phone: "+39 333 0123456",
+      vehicle: "Peugeot 308 - Gray",
+      company: "Roma Taxi Service",
+      status: "online",
+    },
 
-    for (const driverInfo of companyDrivers) {
-      const cityRef = await prisma.city.findFirst({
-        where: { name: driverInfo.cityName },
-      });
+    // Milano Express - Additional drivers
+    {
+      name: "Fabio Pellegrini",
+      email: "fabio.pellegrini@driver.it",
+      phone: "+39 334 1234567",
+      vehicle: "Tesla Model 3 - White",
+      company: "Milano Express",
+      status: "online",
+    },
+    {
+      name: "Daniele Fabbri",
+      email: "daniele.fabbri@driver.it",
+      phone: "+39 334 2345678",
+      vehicle: "Volvo XC40 - Blue",
+      company: "Milano Express",
+      status: "offline",
+    },
+    {
+      name: "Claudio Marchetti",
+      email: "claudio.marchetti@driver.it",
+      phone: "+39 334 3456789",
+      vehicle: "Alfa Romeo Giulia - Red",
+      company: "Milano Express",
+      status: "on_trip",
+    },
+    {
+      name: "Emanuele Orlando",
+      email: "emanuele.orlando@driver.it",
+      phone: "+39 334 4567890",
+      vehicle: "Maserati Ghibli - Black",
+      company: "Milano Express",
+      status: "online",
+    },
 
-      if (!cityRef) continue;
+    // Napoli Ride - Additional drivers
+    {
+      name: "Gennaro Caputo",
+      email: "gennaro.caputo@driver.it",
+      phone: "+39 335 1234567",
+      vehicle: "Fiat Panda - Yellow",
+      company: "Napoli Ride",
+      status: "online",
+    },
+    {
+      name: "Pasquale Bruno",
+      email: "pasquale.bruno@driver.it",
+      phone: "+39 335 2345678",
+      vehicle: "Lancia Ypsilon - Silver",
+      company: "Napoli Ride",
+      status: "offline",
+    },
+    {
+      name: "Ciro Ferrara",
+      email: "ciro.ferrara@driver.it",
+      phone: "+39 335 3456789",
+      vehicle: "Jeep Renegade - Green",
+      company: "Napoli Ride",
+      status: "on_trip",
+    },
+    {
+      name: "Luigi Galdi",
+      email: "luigi.galdi@driver.it",
+      phone: "+39 335 4567890",
+      vehicle: "Hyundai Tucson - White",
+      company: "Napoli Ride",
+      status: "online",
+    },
+  ];
 
-      const driver = await prisma.driver.create({
+  // Additional German Drivers
+  const additionalGermanDrivers = [
+    // Berlin Taxi Union - Additional drivers
+    {
+      name: "Tobias Neumann",
+      email: "tobias.neumann@driver.de",
+      phone: "+49 152 1234567",
+      vehicle: "Tesla Model S - Black",
+      company: "Berlin Taxi Union",
+      status: "online",
+    },
+    {
+      name: "Florian Lange",
+      email: "florian.lange@driver.de",
+      phone: "+49 152 2345678",
+      vehicle: "Porsche Cayenne - Silver",
+      company: "Berlin Taxi Union",
+      status: "offline",
+    },
+    {
+      name: "Sebastian Horn",
+      email: "sebastian.horn@driver.de",
+      phone: "+49 152 3456789",
+      vehicle: "Mini Cooper S - Red",
+      company: "Berlin Taxi Union",
+      status: "on_trip",
+    },
+    {
+      name: "Oliver Scholz",
+      email: "oliver.scholz@driver.de",
+      phone: "+49 152 4567890",
+      vehicle: "Opel Insignia - Blue",
+      company: "Berlin Taxi Union",
+      status: "online",
+    },
+
+    // München Fahrdienst - Additional drivers
+    {
+      name: "Maximilian König",
+      email: "maximilian.koenig@driver.de",
+      phone: "+49 153 1234567",
+      vehicle: "BMW i8 - White",
+      company: "München Fahrdienst",
+      status: "online",
+    },
+    {
+      name: "Alexander Weiß",
+      email: "alexander.weiss@driver.de",
+      phone: "+49 153 2345678",
+      vehicle: "Audi Q7 - Black",
+      company: "München Fahrdienst",
+      status: "offline",
+    },
+    {
+      name: "Benjamin Pohl",
+      email: "benjamin.pohl@driver.de",
+      phone: "+49 153 3456789",
+      vehicle: "Mercedes S-Class - Silver",
+      company: "München Fahrdienst",
+      status: "on_trip",
+    },
+    {
+      name: "Philipp Engel",
+      email: "philipp.engel@driver.de",
+      phone: "+49 153 4567890",
+      vehicle: "Volkswagen Touareg - Gray",
+      company: "München Fahrdienst",
+      status: "online",
+    },
+
+    // Hamburg City Rides - Additional drivers
+    {
+      name: "Jan Sommer",
+      email: "jan.sommer@driver.de",
+      phone: "+49 154 1234567",
+      vehicle: "Volvo V90 - Blue",
+      company: "Hamburg City Rides",
+      status: "online",
+    },
+    {
+      name: "Nils Winter",
+      email: "nils.winter@driver.de",
+      phone: "+49 154 2345678",
+      vehicle: "Saab 9-3 - Green",
+      company: "Hamburg City Rides",
+      status: "offline",
+    },
+    {
+      name: "Lars Förster",
+      email: "lars.foerster@driver.de",
+      phone: "+49 154 3456789",
+      vehicle: "Skoda Superb - White",
+      company: "Hamburg City Rides",
+      status: "on_trip",
+    },
+    {
+      name: "Tim Baumann",
+      email: "tim.baumann@driver.de",
+      phone: "+49 154 4567890",
+      vehicle: "Seat Leon - Orange",
+      company: "Hamburg City Rides",
+      status: "online",
+    },
+  ];
+
+  // Create additional drivers
+  const allAdditionalDrivers = [
+    ...additionalItalianDrivers,
+    ...additionalGermanDrivers,
+  ];
+  const createdAdditionalDrivers = [];
+
+  for (const driver of allAdditionalDrivers) {
+    const company = getCompany(driver.company);
+    if (!company) {
+      console.error(
+        `❌ Skipping driver ${driver.name} - company not found: ${driver.company}`
+      );
+      continue;
+    }
+
+    const cityName = {
+      "Roma Taxi Service": "Rome",
+      "Milano Express": "Milan",
+      "Napoli Ride": "Naples",
+      "Berlin Taxi Union": "Berlin",
+      "München Fahrdienst": "Munich",
+      "Hamburg City Rides": "Hamburg",
+    }[driver.company];
+
+    const city = getCity(cityName);
+    if (!city) {
+      console.error(
+        `❌ Skipping driver ${driver.name} - city not found: ${cityName}`
+      );
+      continue;
+    }
+
+    try {
+      const createdDriver = await prisma.driver.create({
         data: {
-          name: driverInfo.name,
-          email: driverInfo.email,
-          phone: driverInfo.phone,
-          status:
-            driverStatuses[Math.floor(Math.random() * driverStatuses.length)],
-          vehicleInfo: driverInfo.vehicle,
+          name: driver.name,
+          email: driver.email,
+          phone: driver.phone,
+          status: driver.status,
+          vehicleInfo: driver.vehicle,
           companyId: company.id,
-          cityId: cityRef.id,
+          cityId: city.id,
           timezone: company.timezone,
         },
       });
-      europeanDrivers.push(driver);
 
-      // Create location for each driver - using realistic European coordinates
-      let lat, lng;
-      switch (driverInfo.cityName) {
-        case "Paris":
-          lat = 48.8566 + (Math.random() - 0.5) * 0.05;
-          lng = 2.3522 + (Math.random() - 0.5) * 0.05;
-          break;
-        case "Berlin":
-          lat = 52.52 + (Math.random() - 0.5) * 0.05;
-          lng = 13.405 + (Math.random() - 0.5) * 0.05;
-          break;
-        case "Madrid":
-          lat = 40.4168 + (Math.random() - 0.5) * 0.05;
-          lng = -3.7038 + (Math.random() - 0.5) * 0.05;
-          break;
-        case "Rome":
-          lat = 41.9028 + (Math.random() - 0.5) * 0.05;
-          lng = 12.4964 + (Math.random() - 0.5) * 0.05;
-          break;
-        case "Barcelona":
-          lat = 41.3851 + (Math.random() - 0.5) * 0.05;
-          lng = 2.1734 + (Math.random() - 0.5) * 0.05;
-          break;
-        default:
-          lat = 50.0 + (Math.random() - 0.5) * 10;
-          lng = 10.0 + (Math.random() - 0.5) * 10;
+      createdAdditionalDrivers.push({
+        ...createdDriver,
+        cityName,
+        status: driver.status,
+      });
+      console.log(`✅ Created driver: ${driver.name} for ${driver.company}`);
+    } catch (error) {
+      console.error(`❌ Error creating driver ${driver.name}:`, error.message);
+    }
+  }
+
+  // Create locations for online/on_trip drivers
+  const locationCoordinates = {
+    Rome: [41.9028, 12.4964],
+    Milan: [45.4642, 9.19],
+    Naples: [40.8518, 14.2681],
+    Berlin: [52.52, 13.405],
+    Munich: [48.1351, 11.582],
+    Hamburg: [53.5511, 9.9937],
+  };
+
+  const onlineAdditionalDrivers = createdAdditionalDrivers.filter(
+    (d) => d.status === "online" || d.status === "on_trip"
+  );
+
+  for (const driver of onlineAdditionalDrivers) {
+    const coords = locationCoordinates[driver.cityName];
+
+    await prisma.location.create({
+      data: {
+        driverId: driver.id,
+        lat: coords[0] + (Math.random() - 0.5) * 0.15,
+        lng: coords[1] + (Math.random() - 0.5) * 0.15,
+      },
+    });
+  }
+
+  // Create availability for additional drivers
+  const today = new Date();
+
+  for (const driver of createdAdditionalDrivers) {
+    // Create availability for next 5 days
+    for (let day = 0; day < 5; day++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + day);
+
+      // Some drivers work different shifts
+      const shiftType = Math.random();
+      let startHour, endHour;
+
+      if (shiftType < 0.3) {
+        // Early shift
+        startHour = 6;
+        endHour = 14;
+      } else if (shiftType < 0.6) {
+        // Regular shift
+        startHour = 8;
+        endHour = 18;
+      } else if (shiftType < 0.9) {
+        // Late shift
+        startHour = 14;
+        endHour = 22;
+      } else {
+        // Night shift
+        startHour = 22;
+        endHour = 6; // Next day
       }
 
-      await prisma.location.create({
-        data: {
-          driverId: driver.id,
-          lat,
-          lng,
-        },
-      });
+      const startTime = new Date(date.setHours(startHour, 0, 0, 0));
+      const endTime = new Date(date.setHours(endHour, 0, 0, 0));
 
-      // Create availability for each driver using European working hours
-      const today = new Date();
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      if (endHour < startHour) {
+        endTime.setDate(endTime.getDate() + 1);
+      }
 
-      // Morning shift
       await prisma.driverAvailability.create({
         data: {
           driverId: driver.id,
-          startTime: new Date(today.setHours(8, 0, 0, 0)),
-          endTime: new Date(today.setHours(16, 0, 0, 0)),
+          startTime,
+          endTime,
         },
       });
-
-      // Evening shift for some drivers
-      if (Math.random() > 0.5) {
-        await prisma.driverAvailability.create({
-          data: {
-            driverId: driver.id,
-            startTime: new Date(tomorrow.setHours(16, 0, 0, 0)),
-            endTime: new Date(tomorrow.setHours(23, 59, 0, 0)),
-          },
-        });
-      }
     }
   }
 
-  // Create European Customers
-  console.log("Creating European customers...");
-  const europeanCustomers = [];
+  // Additional Users for companies
+  const additionalUsers = [
+    // Italian Users
+    {
+      name: "Chiara Fontana",
+      email: "chiara.fontana@romataxiservice.it",
+      role: "OPERATOR",
+      company: "Roma Taxi Service",
+    },
+    {
+      name: "Riccardo Longo",
+      email: "riccardo.longo@romataxiservice.it",
+      role: "OPERATOR",
+      company: "Roma Taxi Service",
+    },
+    {
+      name: "Silvia Monti",
+      email: "silvia.monti@milanoexpress.it",
+      role: "MANAGER",
+      company: "Milano Express",
+    },
+    {
+      name: "Federico Villa",
+      email: "federico.villa@milanoexpress.it",
+      role: "OPERATOR",
+      company: "Milano Express",
+    },
+    {
+      name: "Giorgia Cattaneo",
+      email: "giorgia.cattaneo@napoliride.it",
+      role: "OPERATOR",
+      company: "Napoli Ride",
+    },
+    {
+      name: "Nicola De Santis",
+      email: "nicola.desantis@napoliride.it",
+      role: "OPERATOR",
+      company: "Napoli Ride",
+    },
 
-  // Sample customer data by company
-  const customerData = {
-    EuroRides: [
-      {
-        name: "Vincent Dupont",
-        email: "vincent@gmail.com",
-        phone: "+33712345678",
-      },
-      {
-        name: "Amélie Moreau",
-        email: "amelie@yahoo.fr",
-        phone: "+33723456789",
-      },
-      {
-        name: "Sophie Martin",
-        email: "sophie@outlook.fr",
-        phone: "+33734567890",
-      },
-    ],
-    GermanWheels: [
-      {
-        name: "Thomas Fischer",
-        email: "thomas@gmail.com",
-        phone: "+491534567890",
-      },
-      { name: "Anna Wagner", email: "anna@outlook.de", phone: "+491645678901" },
-      {
-        name: "Lukas Schmidt",
-        email: "lukas@gmail.com",
-        phone: "+491756789012",
-      },
-    ],
-    ItalianTransfers: [
-      {
-        name: "Luca Esposito",
-        email: "luca@gmail.com",
-        phone: "+393456789012",
-      },
-      { name: "Sofia Marino", email: "sofia@yahoo.it", phone: "+393567890123" },
-      {
-        name: "Elena Romano",
-        email: "elena@outlook.it",
-        phone: "+393678901234",
-      },
-    ],
-    SpanishCab: [
-      {
-        name: "Miguel Fernández",
-        email: "miguel@gmail.com",
-        phone: "+34612345678",
-      },
-      {
-        name: "Lucía Martínez",
-        email: "lucia@hotmail.es",
-        phone: "+34723456789",
-      },
-      {
-        name: "Pablo Sánchez",
-        email: "pablo@outlook.es",
-        phone: "+34834567890",
-      },
-    ],
-  };
-
-  for (const company of europeanCompanies) {
-    const companyCustomers = customerData[company.name] || [];
-
-    for (const customerInfo of companyCustomers) {
-      const customer = await prisma.customer.create({
-        data: {
-          name: customerInfo.name,
-          email: customerInfo.email,
-          phone: customerInfo.phone,
-          companyId: company.id,
-        },
-      });
-      europeanCustomers.push(customer);
-    }
-  }
-
-  // Create European Bookings
-  console.log("Creating European bookings...");
-  const bookingStatuses = [
-    "pending",
-    "accepted",
-    "ongoing",
-    "completed",
-    "cancelled",
+    // German Users
+    {
+      name: "Jennifer Krüger",
+      email: "jennifer.krueger@berlintaxiunion.de",
+      role: "OPERATOR",
+      company: "Berlin Taxi Union",
+    },
+    {
+      name: "Patrick Roth",
+      email: "patrick.roth@berlintaxiunion.de",
+      role: "OPERATOR",
+      company: "Berlin Taxi Union",
+    },
+    {
+      name: "Nicole Hartmann",
+      email: "nicole.hartmann@muenchenfahrdienst.de",
+      role: "MANAGER",
+      company: "München Fahrdienst",
+    },
+    {
+      name: "Robert Jung",
+      email: "robert.jung@muenchenfahrdienst.de",
+      role: "OPERATOR",
+      company: "München Fahrdienst",
+    },
+    {
+      name: "Melanie Vogel",
+      email: "melanie.vogel@hamburgcityrides.de",
+      role: "OPERATOR",
+      company: "Hamburg City Rides",
+    },
+    {
+      name: "Carsten Möller",
+      email: "carsten.moeller@hamburgcityrides.de",
+      role: "OPERATOR",
+      company: "Hamburg City Rides",
+    },
   ];
 
-  // European locations by city
-  const europeanLocations = {
-    Paris: [
-      "Charles de Gaulle Airport, Terminal 2E",
-      "Eiffel Tower, Champ de Mars",
-      "Gare du Nord",
-      "Louvre Museum",
-      "Notre-Dame Cathedral",
-    ],
-    Berlin: [
-      "Berlin Brandenburg Airport",
-      "Brandenburg Gate",
-      "Alexanderplatz",
-      "Berlin Hauptbahnhof",
-      "Checkpoint Charlie",
-    ],
-    Madrid: [
-      "Madrid Barajas Airport",
-      "Puerta del Sol",
-      "Plaza Mayor",
-      "Royal Palace of Madrid",
-      "Prado Museum",
-    ],
-    Rome: [
-      "Rome Fiumicino Airport",
-      "Colosseum",
-      "Vatican City",
-      "Trevi Fountain",
-      "Spanish Steps",
-    ],
-    Barcelona: [
-      "Barcelona El Prat Airport",
-      "Sagrada Familia",
-      "Park Güell",
-      "La Rambla",
-      "Gothic Quarter",
-    ],
-  };
+  for (const user of additionalUsers) {
+    const company = getCompany(user.company);
+    const role = getRole(user.role);
 
-  for (const company of europeanCompanies) {
-    if (!company.isApproved && company.name === "SpanishCab") continue; // Skip unapproved companies
-
-    const companyDrivers = europeanDrivers.filter(
-      (d) => d.companyId === company.id
-    );
-    const companyCustomers = europeanCustomers.filter(
-      (c) => c.companyId === company.id
-    );
-
-    if (companyDrivers.length === 0 || companyCustomers.length === 0) continue;
-
-    // Determine city for this company
-    let cityName;
-    switch (company.name) {
-      case "EuroRides":
-        cityName = "Paris";
-        break;
-      case "GermanWheels":
-        cityName = "Berlin";
-        break;
-      case "ItalianTransfers":
-        cityName = "Rome";
-        break;
-      case "SpanishCab":
-        cityName = "Madrid";
-        break;
-      default:
-        cityName = "Paris";
+    if (!company) {
+      console.error(
+        `❌ Skipping user ${user.name} - company not found: ${user.company}`
+      );
+      continue;
     }
 
-    const locations = europeanLocations[cityName] || europeanLocations["Paris"];
+    if (!role) {
+      console.error(
+        `❌ Skipping user ${user.name} - role not found: ${user.role}`
+      );
+      continue;
+    }
 
-    // Create multiple bookings for each company
-    for (let i = 0; i < 10; i++) {
-      const status =
-        bookingStatuses[Math.floor(Math.random() * bookingStatuses.length)];
-      const customer =
-        companyCustomers[Math.floor(Math.random() * companyCustomers.length)];
-      const driver =
-        status === "pending"
-          ? null
-          : companyDrivers[Math.floor(Math.random() * companyDrivers.length)];
-
-      const pickup = locations[Math.floor(Math.random() * locations.length)];
-      const dropoff = locations[Math.floor(Math.random() * locations.length)];
-
-      // Make sure pickup and dropoff are different
-      const actualDropoff =
-        pickup === dropoff
-          ? locations[(locations.indexOf(dropoff) + 1) % locations.length]
-          : dropoff;
-
-      await prisma.booking.create({
+    try {
+      await prisma.user.create({
         data: {
-          customerId: customer.id,
-          driverId: driver?.id || null,
+          name: user.name,
+          email: user.email,
+          password: await hashPassword("Password123!"),
           companyId: company.id,
-          pickup,
-          dropoff: actualDropoff,
-          status,
-          fare:
-            status === "completed" ? Math.floor(15 + Math.random() * 45) : null,
-          requestedAt: new Date(
-            Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)
-          ), // Random date in the last week
+          roleId: role.id,
         },
       });
+      console.log(`✅ Created user: ${user.name} for ${user.company}`);
+    } catch (error) {
+      console.error(`❌ Error creating user ${user.name}:`, error.message);
     }
   }
 
-  console.log("European database seeding completed successfully!");
-}
+  // Additional Customers
+  const additionalCustomers = [
+    // Italian Customers
+    {
+      name: "Alessandra Neri",
+      email: "alessandra.neri@gmail.com",
+      phone: "+39 320 7890123",
+      company: "Roma Taxi Service",
+    },
+    {
+      name: "Gabriele Parisi",
+      email: "gabriele.parisi@yahoo.it",
+      phone: "+39 320 8901234",
+      company: "Roma Taxi Service",
+    },
+    {
+      name: "Cristina Benedetti",
+      email: "cristina.benedetti@outlook.it",
+      phone: "+39 321 1234567",
+      company: "Roma Taxi Service",
+    },
+    {
+      name: "Michele Giorgi",
+      email: "michele.giorgi@libero.it",
+      phone: "+39 321 2345678",
+      company: "Roma Taxi Service",
+    },
 
-// Main function to execute seed
-async function main() {
-  try {
-    await seedEuropeanData();
-  } catch (error) {
-    console.error("Error seeding European data:", error);
-    process.exit(1);
-  } finally {
-    await prisma.$disconnect();
+    {
+      name: "Federica Caruso",
+      email: "federica.caruso@gmail.com",
+      phone: "+39 321 3456789",
+      company: "Milano Express",
+    },
+    {
+      name: "Tommaso Ferretti",
+      email: "tommaso.ferretti@hotmail.it",
+      phone: "+39 321 4567890",
+      company: "Milano Express",
+    },
+    {
+      name: "Beatrice Ricci",
+      email: "beatrice.ricci@yahoo.it",
+      phone: "+39 321 5678901",
+      company: "Milano Express",
+    },
+    {
+      name: "Mattia Fiorentino",
+      email: "mattia.fiorentino@gmail.com",
+      phone: "+39 321 6789012",
+      company: "Milano Express",
+    },
+
+    {
+      name: "Serena Palmieri",
+      email: "serena.palmieri@outlook.it",
+      phone: "+39 322 1234567",
+      company: "Napoli Ride",
+    },
+    {
+      name: "Raffaele Gallo",
+      email: "raffaele.gallo@libero.it",
+      phone: "+39 322 2345678",
+      company: "Napoli Ride",
+    },
+    {
+      name: "Monica Sorrentino",
+      email: "monica.sorrentino@gmail.com",
+      phone: "+39 322 3456789",
+      company: "Napoli Ride",
+    },
+    {
+      name: "Gaetano Amato",
+      email: "gaetano.amato@yahoo.it",
+      phone: "+39 322 4567890",
+      company: "Napoli Ride",
+    },
+
+    // German Customers
+    {
+      name: "Sandra Günther",
+      email: "sandra.guenther@gmail.com",
+      phone: "+49 171 1234567",
+      company: "Berlin Taxi Union",
+    },
+    {
+      name: "Marco Dietrich",
+      email: "marco.dietrich@web.de",
+      phone: "+49 171 2345678",
+      company: "Berlin Taxi Union",
+    },
+    {
+      name: "Claudia Ludwig",
+      email: "claudia.ludwig@gmx.de",
+      phone: "+49 171 3456789",
+      company: "Berlin Taxi Union",
+    },
+    {
+      name: "Sven Böhm",
+      email: "sven.boehm@outlook.de",
+      phone: "+49 171 4567890",
+      company: "Berlin Taxi Union",
+    },
+
+    {
+      name: "Kathrin Scholze",
+      email: "kathrin.scholze@gmail.com",
+      phone: "+49 172 1234567",
+      company: "München Fahrdienst",
+    },
+    {
+      name: "René Schuster",
+      email: "rene.schuster@t-online.de",
+      phone: "+49 172 2345678",
+      company: "München Fahrdienst",
+    },
+    {
+      name: "Birgit Henkel",
+      email: "birgit.henkel@web.de",
+      phone: "+49 172 3456789",
+      company: "München Fahrdienst",
+    },
+    {
+      name: "Dirk Albrecht",
+      email: "dirk.albrecht@gmx.de",
+      phone: "+49 172 4567890",
+      company: "München Fahrdienst",
+    },
+
+    {
+      name: "Anja Kellner",
+      email: "anja.kellner@gmail.com",
+      phone: "+49 173 1234567",
+      company: "Hamburg City Rides",
+    },
+    {
+      name: "Holger Franke",
+      email: "holger.franke@outlook.de",
+      phone: "+49 173 2345678",
+      company: "Hamburg City Rides",
+    },
+    {
+      name: "Ines Haas",
+      email: "ines.haas@t-online.de",
+      phone: "+49 173 3456789",
+      company: "Hamburg City Rides",
+    },
+    {
+      name: "Uwe Fricke",
+      email: "uwe.fricke@web.de",
+      phone: "+49 173 4567890",
+      company: "Hamburg City Rides",
+    },
+  ];
+
+  const createdAdditionalCustomers = [];
+  for (const customer of additionalCustomers) {
+    const company = getCompany(customer.company);
+
+    if (!company) {
+      console.error(
+        `❌ Skipping customer ${customer.name} - company not found: ${customer.company}`
+      );
+      continue;
+    }
+
+    try {
+      const createdCustomer = await prisma.customer.create({
+        data: {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          companyId: company.id,
+        },
+      });
+
+      createdAdditionalCustomers.push({
+        ...createdCustomer,
+        companyName: customer.company,
+      });
+      console.log(
+        `✅ Created customer: ${customer.name} for ${customer.company}`
+      );
+    } catch (error) {
+      console.error(
+        `❌ Error creating customer ${customer.name}:`,
+        error.message
+      );
+    }
   }
+
+  // Get all drivers (existing + new) for booking assignment
+  const allDrivers = await prisma.driver.findMany({
+    include: {
+      company: true,
+    },
+  });
+
+  // Additional Bookings
+  const additionalBookings = [
+    // Rome bookings
+    {
+      pickup: "Pantheon, Rome",
+      dropoff: "Spanish Steps, Rome",
+      status: "completed",
+      fare: 12.5,
+      company: "Roma Taxi Service",
+    },
+    {
+      pickup: "Trevi Fountain, Rome",
+      dropoff: "Campo de' Fiori, Rome",
+      status: "ongoing",
+      fare: null,
+      company: "Roma Taxi Service",
+    },
+    {
+      pickup: "Piazza Navona, Rome",
+      dropoff: "Castel Sant'Angelo, Rome",
+      status: "accepted",
+      fare: 15.0,
+      company: "Roma Taxi Service",
+    },
+    {
+      pickup: "Villa Borghese, Rome",
+      dropoff: "Palatine Hill, Rome",
+      status: "pending",
+      fare: null,
+      company: "Roma Taxi Service",
+    },
+    {
+      pickup: "Capitoline Museums, Rome",
+      dropoff: "Baths of Caracalla, Rome",
+      status: "completed",
+      fare: 18.75,
+      company: "Roma Taxi Service",
+    },
+    {
+      pickup: "Ostia Antica",
+      dropoff: "EUR District, Rome",
+      status: "cancelled",
+      fare: null,
+      company: "Roma Taxi Service",
+    },
+
+    // Milan bookings
+    {
+      pickup: "La Scala, Milan",
+      dropoff: "Castello Sforzesco, Milan",
+      status: "completed",
+      fare: 8.5,
+      company: "Milano Express",
+    },
+    {
+      pickup: "Quadrilatero della Moda, Milan",
+      dropoff: "Isola District, Milan",
+      status: "ongoing",
+      fare: null,
+      company: "Milano Express",
+    },
+    {
+      pickup: "Galleria Vittorio Emanuele II, Milan",
+      dropoff: "Corso di Porta Ticinese, Milan",
+      status: "accepted",
+      fare: 14.0,
+      company: "Milano Express",
+    },
+    {
+      pickup: "Linate Airport, Milan",
+      dropoff: "Centrale Station, Milan",
+      status: "pending",
+      fare: null,
+      company: "Milano Express",
+    },
+    {
+      pickup: "San Siro Stadium, Milan",
+      dropoff: "Porta Garibaldi, Milan",
+      status: "completed",
+      fare: 22.0,
+      company: "Milano Express",
+    },
+    {
+      pickup: "Fieramilano",
+      dropoff: "Citylife, Milan",
+      status: "cancelled",
+      fare: null,
+      company: "Milano Express",
+    },
+
+    // Naples bookings
+    {
+      pickup: "Castel dell'Ovo, Naples",
+      dropoff: "Piazza del Plebiscito, Naples",
+      status: "completed",
+      fare: 7.5,
+      company: "Napoli Ride",
+    },
+    {
+      pickup: "Royal Palace of Naples",
+      dropoff: "Castel Nuovo, Naples",
+      status: "ongoing",
+      fare: null,
+      company: "Napoli Ride",
+    },
+    {
+      pickup: "Via dei Tribunali, Naples",
+      dropoff: "Certosa di San Martino, Naples",
+      status: "accepted",
+      fare: 11.0,
+      company: "Napoli Ride",
+    },
+    {
+      pickup: "Palazzo Reale, Naples",
+      dropoff: "Mergellina, Naples",
+      status: "pending",
+      fare: null,
+      company: "Napoli Ride",
+    },
+    {
+      pickup: "Capodimonte, Naples",
+      dropoff: "Posillipo, Naples",
+      status: "completed",
+      fare: 16.5,
+      company: "Napoli Ride",
+    },
+    {
+      pickup: "Vesuvius",
+      dropoff: "Herculaneum",
+      status: "cancelled",
+      fare: null,
+      company: "Napoli Ride",
+    },
+
+    // Berlin bookings
+    {
+      pickup: "Reichstag, Berlin",
+      dropoff: "Checkpoint Charlie, Berlin",
+      status: "completed",
+      fare: 11.5,
+      company: "Berlin Taxi Union",
+    },
+    {
+      pickup: "Museum Island, Berlin",
+      dropoff: "East Side Gallery, Berlin",
+      status: "ongoing",
+      fare: null,
+      company: "Berlin Taxi Union",
+    },
+    {
+      pickup: "Hackescher Markt, Berlin",
+      dropoff: "Prenzlauer Berg, Berlin",
+      status: "accepted",
+      fare: 9.0,
+      company: "Berlin Taxi Union",
+    },
+    {
+      pickup: "Tegel Airport, Berlin",
+      dropoff: "Mitte, Berlin",
+      status: "pending",
+      fare: null,
+      company: "Berlin Taxi Union",
+    },
+    {
+      pickup: "Kreuzberg, Berlin",
+      dropoff: "Charlottenburg, Berlin",
+      status: "completed",
+      fare: 13.75,
+      company: "Berlin Taxi Union",
+    },
+    {
+      pickup: "Friedrichshain, Berlin",
+      dropoff: "Schöneberg, Berlin",
+      status: "cancelled",
+      fare: null,
+      company: "Berlin Taxi Union",
+    },
+
+    // Munich bookings
+    {
+      pickup: "Viktualienmarkt, Munich",
+      dropoff: "English Garden, Munich",
+      status: "completed",
+      fare: 9.5,
+      company: "München Fahrdienst",
+    },
+    {
+      pickup: "Nymphenburg Palace, Munich",
+      dropoff: "Olympiapark, Munich",
+      status: "ongoing",
+      fare: null,
+      company: "München Fahrdienst",
+    },
+    {
+      pickup: "Schwabing, Munich",
+      dropoff: "Maximilianstrasse, Munich",
+      status: "accepted",
+      fare: 12.0,
+      company: "München Fahrdienst",
+    },
+    {
+      pickup: "Franz Josef Strauss Airport, Munich",
+      dropoff: "Altstadt, Munich",
+      status: "pending",
+      fare: null,
+      company: "München Fahrdienst",
+    },
+    {
+      pickup: "Deutsches Museum, Munich",
+      dropoff: "Giesing, Munich",
+      status: "completed",
+      fare: 14.25,
+      company: "München Fahrdienst",
+    },
+    {
+      pickup: "Oktoberfest Grounds, Munich",
+      dropoff: "Lehel, Munich",
+      status: "cancelled",
+      fare: null,
+      company: "München Fahrdienst",
+    },
+
+    // Hamburg bookings
+    {
+      pickup: "Speicherstadt, Hamburg",
+      dropoff: "Elbphilharmonie, Hamburg",
+      status: "completed",
+      fare: 8.0,
+      company: "Hamburg City Rides",
+    },
+    {
+      pickup: "Miniatur Wunderland, Hamburg",
+      dropoff: "Blankenese, Hamburg",
+      status: "ongoing",
+      fare: null,
+      company: "Hamburg City Rides",
+    },
+    {
+      pickup: "Planten un Blomen, Hamburg",
+      dropoff: "Ottensen, Hamburg",
+      status: "accepted",
+      fare: 10.5,
+      company: "Hamburg City Rides",
+    },
+    {
+      pickup: "Hamburg Airport",
+      dropoff: "Eimsbüttel, Hamburg",
+      status: "pending",
+      fare: null,
+      company: "Hamburg City Rides",
+    },
+    {
+      pickup: "Fish Market, Hamburg",
+      dropoff: "Winterhude, Hamburg",
+      status: "completed",
+      fare: 12.0,
+      company: "Hamburg City Rides",
+    },
+    {
+      pickup: "Port of Hamburg",
+      dropoff: "Harvestehude, Hamburg",
+      status: "cancelled",
+      fare: null,
+      company: "Hamburg City Rides",
+    },
+  ];
+
+  // Create additional bookings
+  for (const booking of additionalBookings) {
+    const company = getCompany(booking.company);
+    const companyCustomers = createdAdditionalCustomers.filter(
+      (c) => c.companyName === booking.company
+    );
+    const companyDrivers = allDrivers.filter(
+      (d) => d.company.name === booking.company
+    );
+
+    if (companyCustomers.length === 0 || companyDrivers.length === 0) continue;
+
+    const randomCustomer =
+      companyCustomers[Math.floor(Math.random() * companyCustomers.length)];
+    const randomDriver =
+      booking.status !== "pending"
+        ? companyDrivers[Math.floor(Math.random() * companyDrivers.length)]
+        : null;
+
+    await prisma.booking.create({
+      data: {
+        customerId: randomCustomer.id,
+        driverId: randomDriver?.id || null,
+        companyId: company.id,
+        pickup: booking.pickup,
+        dropoff: booking.dropoff,
+        status: booking.status,
+        fare: booking.fare,
+        requestedAt: new Date(
+          Date.now() - Math.random() * 14 * 24 * 60 * 60 * 1000
+        ), // Random time in last 14 days
+      },
+    });
+  }
+
+  // Add more company media
+  const additionalMedia = [
+    {
+      company: "Roma Taxi Service",
+      type: "DOCUMENT",
+      url: "https://example.com/documents/roma-taxi-license.pdf",
+    },
+    {
+      company: "Milano Express",
+      type: "DOCUMENT",
+      url: "https://example.com/documents/milano-express-insurance.pdf",
+    },
+    {
+      company: "Napoli Ride",
+      type: "DOCUMENT",
+      url: "https://example.com/documents/napoli-ride-permit.pdf",
+    },
+    {
+      company: "Berlin Taxi Union",
+      type: "DOCUMENT",
+      url: "https://example.com/documents/berlin-taxi-certification.pdf",
+    },
+    {
+      company: "München Fahrdienst",
+      type: "DOCUMENT",
+      url: "https://example.com/documents/muenchen-fahrdienst-license.pdf",
+    },
+    {
+      company: "Hamburg City Rides",
+      type: "DOCUMENT",
+      url: "https://example.com/documents/hamburg-rides-permit.pdf",
+    },
+  ];
+
+  for (const media of additionalMedia) {
+    const company = getCompany(media.company);
+
+    if (!company) {
+      console.error(`❌ Skipping media - company not found: ${media.company}`);
+      continue;
+    }
+
+    try {
+      await prisma.companyMedia.create({
+        data: {
+          companyId: company.id,
+          type: media.type,
+          url: media.url,
+        },
+      });
+      console.log(`✅ Added media for: ${media.company}`);
+    } catch (error) {
+      console.error(
+        `❌ Error adding media for ${media.company}:`,
+        error.message
+      );
+    }
+  }
+
+  // Add secondary addresses for some companies
+  const secondaryAddresses = [
+    {
+      company: "Roma Taxi Service",
+      address: {
+        street: "Via Appia Nuova, 456",
+        city: "Rome",
+        state: "Lazio",
+        country: "Italy",
+        postalCode: "00179",
+        isPrimary: false,
+      },
+    },
+    {
+      company: "Milano Express",
+      address: {
+        street: "Viale Monza, 78",
+        city: "Milan",
+        state: "Lombardy",
+        country: "Italy",
+        postalCode: "20125",
+        isPrimary: false,
+      },
+    },
+    {
+      company: "Berlin Taxi Union",
+      address: {
+        street: "Friedrichstraße, 200",
+        city: "Berlin",
+        state: "Berlin",
+        country: "Germany",
+        postalCode: "10117",
+        isPrimary: false,
+      },
+    },
+  ];
+
+  for (const addressData of secondaryAddresses) {
+    const company = getCompany(addressData.company);
+
+    if (!company) {
+      console.error(
+        `❌ Skipping address - company not found: ${addressData.company}`
+      );
+      continue;
+    }
+
+    try {
+      await prisma.companyAddress.create({
+        data: {
+          companyId: company.id,
+          ...addressData.address,
+        },
+      });
+      console.log(`✅ Added secondary address for: ${addressData.company}`);
+    } catch (error) {
+      console.error(
+        `❌ Error adding address for ${addressData.company}:`,
+        error.message
+      );
+    }
+  }
+
+  console.log("✅ Additional data added successfully!");
+  console.log("📊 Summary of additions:");
+  console.log(`• ${allAdditionalDrivers.length} Additional Drivers`);
+  console.log(`• ${additionalUsers.length} Additional Users`);
+  console.log(`• ${additionalCustomers.length} Additional Customers`);
+  console.log(`• ${additionalBookings.length} Additional Bookings`);
+  console.log(`• ${additionalMedia.length} Additional Company Documents`);
+  console.log(`• ${secondaryAddresses.length} Secondary Company Addresses`);
+  console.log(`• Driver availabilities for next 5 days`);
+  console.log(`• Location tracking for online drivers`);
+
+  // Final statistics
+  const totalDrivers = await prisma.driver.count();
+  const totalCustomers = await prisma.customer.count();
+  const totalBookings = await prisma.booking.count();
+  const totalUsers = await prisma.user.count();
+
+  console.log("\n🎯 Total Database Statistics:");
+  console.log(`• ${totalDrivers} Total Drivers`);
+  console.log(`• ${totalCustomers} Total Customers`);
+  console.log(`• ${totalBookings} Total Bookings`);
+  console.log(`• ${totalUsers} Total Users`);
+  console.log(`• ${companies.length} Companies across Italy & Germany`);
 }
 
-// Execute the seed
-main();
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

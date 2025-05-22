@@ -34,13 +34,7 @@ async function editCompany(req, res, next) {
 // Get all companies with optional filters and pagination
 async function getAllCompanies(req, res, next) {
   try {
-    const { page = 1, limit = 20, ...filters } = req.query;
-    const pagination = {
-      skip: (page - 1) * limit,
-      take: parseInt(limit),
-    };
-
-    const result = await companyService.findAll(filters, pagination);
+    const result = await companyService.findAll(filters);
 
     res.status(StatusCodes.OK).json({
       success: true,

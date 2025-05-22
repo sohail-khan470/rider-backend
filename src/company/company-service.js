@@ -31,18 +31,49 @@ class CompanyService {
     }
   }
 
-  async findAll(filters = {}, pagination = { skip: 0, take: 10 }) {
+  async findAll(filters = {}) {
     const companies = await prisma.company.findMany({
       where: filters,
-      skip: pagination.skip,
-      take: pagination.take,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        isApproved: true,
-        createdAt: true,
-        timezone: true,
+      include: {
+        contact: true,
+        addresses: true,
+        media: true,
+        profile: true,
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        drivers: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            status: true,
+          },
+        },
+        customers: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        bookings: {
+          select: {
+            id: true,
+            status: true,
+            requestedAt: true,
+          },
+        },
         _count: {
           select: {
             drivers: true,
@@ -58,11 +89,7 @@ class CompanyService {
 
     return {
       data: companies,
-      pagination: {
-        total,
-        page: Math.floor(pagination.skip / pagination.take) + 1,
-        pageSize: pagination.take,
-      },
+      total,
     };
   }
 
