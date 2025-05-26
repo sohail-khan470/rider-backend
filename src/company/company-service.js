@@ -97,17 +97,43 @@ class CompanyService {
     const company = await prisma.company.findUnique({
       where: { id: Number(id) },
       include: {
-        bookings: true,
-        drivers: {
-          include: {
-            location: true,
-            availability: true,
+        contact: true,
+        addresses: true,
+        media: true,
+        profile: true,
+        users: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
-        customers: true,
-        users: {
-          include: {
-            role: true,
+        drivers: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            status: true,
+          },
+        },
+        customers: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        bookings: {
+          select: {
+            id: true,
+            status: true,
+            requestedAt: true,
           },
         },
         _count: {
