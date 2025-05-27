@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 class CompanyService {
   async create(data) {
     try {
-      // Check if company with email already exists
       const existingCompany = await prisma.company.findUnique({
         where: { email: data.email },
       });
@@ -15,7 +14,6 @@ class CompanyService {
         throw new Error("Company with this email already exists");
       }
 
-      // Create company
       const company = await prisma.company.create({
         data: {
           ...data,
@@ -23,140 +21,146 @@ class CompanyService {
         },
       });
 
-      // Remove password from response
       const { password, ...companyWithoutPassword } = company;
       return companyWithoutPassword;
     } catch (error) {
-      throw error;
+      throw new Error(`Failed to create company: ${error.message}`);
     }
   }
 
   async findAll(filters = {}) {
-    const companies = await prisma.company.findMany({
-      where: filters,
-      include: {
-        contact: true,
-        addresses: true,
-        media: true,
-        profile: true,
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: {
-              select: {
-                id: true,
-                name: true,
+    try {
+      const companies = await prisma.company.findMany({
+        where: filters,
+        include: {
+          contact: true,
+          addresses: true,
+          media: true,
+          profile: true,
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
-        },
-        drivers: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            status: true,
+          drivers: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              status: true,
+            },
+          },
+          customers: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          bookings: {
+            select: {
+              id: true,
+              status: true,
+              requestedAt: true,
+            },
+          },
+          _count: {
+            select: {
+              drivers: true,
+              customers: true,
+              users: true,
+              bookings: true,
+            },
           },
         },
-        customers: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        bookings: {
-          select: {
-            id: true,
-            status: true,
-            requestedAt: true,
-          },
-        },
-        _count: {
-          select: {
-            drivers: true,
-            customers: true,
-            users: true,
-            bookings: true,
-          },
-        },
-      },
-    });
+      });
 
-    const total = await prisma.company.count({ where: filters });
+      const total = await prisma.company.count({ where: filters });
 
-    return {
-      data: companies,
-      total,
-    };
+      return {
+        data: companies,
+        total,
+      };
+    } catch (error) {
+      throw new Error(`Failed to fetch companies: ${error.message}`);
+    }
   }
 
   async findById(id) {
-    const company = await prisma.company.findUnique({
-      where: { id: Number(id) },
-      include: {
-        contact: true,
-        addresses: true,
-        media: true,
-        profile: true,
-        users: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: {
-              select: {
-                id: true,
-                name: true,
+    try {
+      const company = await prisma.company.findUnique({
+        where: { id: Number(id) },
+        include: {
+          contact: true,
+          addresses: true,
+          media: true,
+          profile: true,
+          users: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
-        },
-        drivers: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            status: true,
+          drivers: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              status: true,
+            },
+          },
+          customers: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          bookings: {
+            select: {
+              id: true,
+              status: true,
+              requestedAt: true,
+            },
+          },
+          _count: {
+            select: {
+              drivers: true,
+              customers: true,
+              users: true,
+              bookings: true,
+            },
           },
         },
-        customers: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        bookings: {
-          select: {
-            id: true,
-            status: true,
-            requestedAt: true,
-          },
-        },
-        _count: {
-          select: {
-            drivers: true,
-            customers: true,
-            users: true,
-            bookings: true,
-          },
-        },
-      },
-    });
+      });
 
-    if (!company) {
-      throw new Error("Company not found");
+      if (!company) {
+        throw new Error("Company not found");
+      }
+
+      return company;
+    } catch (error) {
+      throw new Error(`Failed to find company: ${error.message}`);
     }
-
-    return company;
   }
 
   async update(id, data) {
     try {
-      // If updating email, check if it's already taken
       if (data.email) {
         const existingCompany = await prisma.company.findFirst({
           where: {
@@ -170,27 +174,32 @@ class CompanyService {
         }
       }
 
-      // Hash password if provided
-      if (data.password) {
-        data.password = await bcrypt.hash(data.password, 10);
-      }
+      const companyData = {
+        name: data.name,
+        timezone: data.timezone,
+      };
+      const contact = data.contact;
+      const profile = data.profile;
 
-      const company = await prisma.company.update({
-        where: { id: Number(id) },
-        data,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          isApproved: true,
-          createdAt: true,
-          timezone: true,
-        },
-      });
+      await prisma.$transaction([
+        prisma.company.update({
+          where: { id: Number(id) },
+          data: companyData,
+        }),
+        prisma.companyContact.update({
+          where: { companyId: Number(id) },
+          data: contact,
+        }),
+        prisma.companyProfile.update({
+          where: { companyId: Number(id) },
+          data: profile,
+        }),
+      ]);
 
+      const company = await this.findById(id);
       return company;
     } catch (error) {
-      throw error;
+      throw new Error(`Failed to update company: ${error.message}`);
     }
   }
 
@@ -220,36 +229,44 @@ class CompanyService {
   }
 
   async authenticate(email, password) {
-    const company = await prisma.company.findUnique({
-      where: { email },
-    });
+    try {
+      const company = await prisma.company.findUnique({
+        where: { email },
+      });
 
-    if (!company) {
-      throw new Error("Invalid credentials");
+      if (!company) {
+        throw new Error("Invalid credentials");
+      }
+
+      const passwordMatch = await bcrypt.compare(password, company.password);
+
+      if (!passwordMatch) {
+        throw new Error("Invalid credentials");
+      }
+
+      if (!company.isApproved) {
+        throw new Error("Your company account has not been approved yet");
+      }
+
+      const { password: _, ...companyWithoutPassword } = company;
+      return companyWithoutPassword;
+    } catch (error) {
+      throw new Error(`Authentication failed: ${error.message}`);
     }
-
-    const passwordMatch = await bcrypt.compare(password, company.password);
-
-    if (!passwordMatch) {
-      throw new Error("Invalid credentials");
-    }
-
-    if (!company.isApproved) {
-      throw new Error("Your company account has not been approved yet");
-    }
-
-    const { password: _, ...companyWithoutPassword } = company;
-    return companyWithoutPassword;
   }
 
   async getCustomerByCompany(companyId) {
-    const customers = await prisma.customer.findMany({
-      where: {
-        companyId: Number(companyId),
-      },
-    });
+    try {
+      const customers = await prisma.customer.findMany({
+        where: {
+          companyId: Number(companyId),
+        },
+      });
 
-    return customers;
+      return customers;
+    } catch (error) {
+      throw new Error(`Failed to fetch customers: ${error.message}`);
+    }
   }
 
   async updateStaff(staffId, data) {
@@ -282,13 +299,22 @@ class CompanyService {
 
   async edit(id, data) {
     try {
+      const existingCompany = await prisma.company.findUnique({
+        where: { id: Number(id) },
+      });
+
+      if (!existingCompany) {
+        throw new Error("Company not found");
+      }
+
       const company = await prisma.company.update({
         where: { id: Number(id) },
         data,
       });
+
       return company;
     } catch (error) {
-      throw new Error(`Failed to update company: ${error}`);
+      throw new Error(`Failed to edit company: ${error.message}`);
     }
   }
 }

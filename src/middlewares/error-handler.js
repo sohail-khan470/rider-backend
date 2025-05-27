@@ -1,138 +1,172 @@
-// src/middlewares/errorHandler.js
-const { StatusCodes } = require("http-status-codes");
+const {
+  PrismaClientKnownRequestError,
+  PrismaClientValidationError,
+} = require("@prisma/client/runtime/library");
 const { AppError } = require("../utils/errorUtils");
 
-/**
- * Enhanced Error Handler Middleware
- * Processes different types of errors and returns appropriate responses
- */
-const errorHandler = (err, req, res, next) => {
-  // Create a copy to avoid mutating the original error
-  const error = { ...err };
-  error.message = err.message;
-  error.statusCode =
-    err.statusCode || err.status || StatusCodes.INTERNAL_SERVER_ERROR;
-  error.status = err.status || "error";
+// Helper function to determine if we're in production
+const isProduction = process.env.NODE_ENV === "production";
 
-  // Structured logging for better debugging
-  const logDetails = {
-    errorId: generateErrorId(),
-    path: req.originalUrl,
-    method: req.method,
+// Handle Prisma errors
+const handlePrismaError = (error) => {
+  if (error instanceof PrismaClientKnownRequestError) {
+    switch (error.code) {
+      case "P2002":
+        // Unique constraint violation
+        const target = error.meta?.target;
+        return new AppError(
+          `A record with this ${
+            target ? target.join(", ") : "value"
+          } already exists`,
+          409,
+          "DUPLICATE_ENTRY",
+          { field: target }
+        );
+
+      case "P2025":
+        // Record not found
+        return new AppError("Record not found", 404, "NOT_FOUND");
+
+      case "P2003":
+        // Foreign key constraint violation
+        return new AppError(
+          "Operation failed due to related record constraints",
+          400,
+          "FOREIGN_KEY_CONSTRAINT"
+        );
+
+      case "P2014":
+        // Required relation missing
+        return new AppError(
+          "Required related record is missing",
+          400,
+          "MISSING_RELATION"
+        );
+
+      default:
+        return new AppError("Database operation failed", 500, "DATABASE_ERROR");
+    }
+  }
+
+  if (error instanceof PrismaClientValidationError) {
+    return new AppError("Invalid data provided", 400, "VALIDATION_ERROR");
+  }
+
+  return new AppError("Database error occurred", 500, "DATABASE_ERROR");
+};
+
+// Handle validation errors (e.g., from express-validator)
+const handleValidationError = (error) => {
+  if (error.array && typeof error.array === "function") {
+    const errors = error.array();
+    const details = errors.map((err) => ({
+      field: err.path || err.param,
+      message: err.msg,
+      value: err.value,
+    }));
+
+    return new AppError("Validation failed", 400, "VALIDATION_ERROR", details);
+  }
+
+  return new AppError("Validation error", 400, "VALIDATION_ERROR");
+};
+
+// Main error handler middleware
+const errorHandler = (err, req, res, next) => {
+  let error = err;
+
+  // Handle Prisma errors
+  if (
+    err.name === "PrismaClientKnownRequestError" ||
+    err.name === "PrismaClientValidationError"
+  ) {
+    error = handlePrismaError(err);
+  }
+
+  // Handle validation errors
+  if (err.name === "ValidationError" && err.array) {
+    error = handleValidationError(err);
+  }
+
+  // Handle JWT errors
+  if (err.name === "JsonWebTokenError") {
+    error = new AppError("Invalid token", 401, "INVALID_TOKEN");
+  }
+
+  if (err.name === "TokenExpiredError") {
+    error = new AppError("Token expired", 401, "TOKEN_EXPIRED");
+  }
+
+  // Handle MongoDB cast errors (if you switch from MySQL later)
+  if (err.name === "CastError") {
+    error = new AppError("Invalid ID format", 400, "INVALID_ID");
+  }
+
+  // If it's not an operational error, create a generic one
+  if (!error.isOperational) {
+    error = new AppError(
+      isProduction ? "Something went wrong" : err.message,
+      500,
+      "INTERNAL_SERVER_ERROR"
+    );
+  }
+
+  // Log error for debugging (you can integrate with logging service)
+  console.error("Error occurred:", {
+    message: err.message,
+    stack: isProduction ? undefined : err.stack,
     statusCode: error.statusCode,
-    errorName: err.name,
-    message: error.message,
-    timestamp: new Date().toISOString(),
+    errorCode: error.errorCode,
+    timestamp: error.timestamp,
+    url: req.originalUrl,
+    method: req.method,
+    ip: req.ip,
+    userAgent: req.get("User-Agent"),
+  });
+
+  // Send error response
+  const errorResponse = {
+    success: false,
+    error: {
+      message: error.message,
+      code: error.errorCode,
+      statusCode: error.statusCode,
+      timestamp: error.timestamp,
+    },
   };
 
-  // Log differently based on environment and severity
-  if (error.statusCode >= 500) {
-    console.error("CRITICAL ERROR:", logDetails, err.stack);
-  } else {
-    console.warn("REQUEST ERROR:", logDetails);
+  // Add details if available
+  if (error.details) {
+    errorResponse.error.details = error.details;
   }
 
-  // Process errors by type
-  processErrorByType(err, error);
+  // Add stack trace in development
+  if (!isProduction && err.stack) {
+    errorResponse.error.stack = err.stack;
+  }
 
-  // Send appropriate response based on request type
-  return sendErrorResponse(req, res, error);
+  res.status(error.statusCode).json(errorResponse);
 };
 
-/**
- * Processes error based on its type and normalizes the response
- * @param {Error} originalError - The original error object
- * @param {Object} processedError - The error object being processed
- */
-const processErrorByType = (originalErr, processedError) => {
-  switch (originalErr.name) {
-    case "ValidationError":
-      // Handle mongoose validation errors
-      const messages = Object.values(originalErr.errors).map(
-        (el) => el.message
-      );
-      processedError.statusCode = StatusCodes.BAD_REQUEST;
-      processedError.message = `Validation failed: ${messages.join(". ")}`;
-      processedError.errors = originalErr.errors;
-      break;
-
-    case "CastError":
-      // Handle invalid MongoDB ObjectId errors
-      processedError.statusCode = StatusCodes.BAD_REQUEST;
-      processedError.message = `Invalid ${originalErr.path}: ${originalErr.value}`;
-      break;
-
-    case "JsonWebTokenError":
-      processedError.statusCode = StatusCodes.UNAUTHORIZED;
-      processedError.message = "Invalid authentication token";
-      break;
-
-    case "TokenExpiredError":
-      processedError.statusCode = StatusCodes.UNAUTHORIZED;
-      processedError.message = "Authentication token expired";
-      break;
-  }
-
-  // Handle MongoDB duplicate key error
-  if (originalErr.code === 11000) {
-    const field = Object.keys(originalErr.keyValue)[0];
-    processedError.statusCode = StatusCodes.CONFLICT;
-    processedError.message = `Duplicate value for ${field}`;
-  }
-
-  return processedError;
+// Async error wrapper to catch async errors
+const asyncHandler = (fn) => {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
 };
 
-/**
- * Sends appropriate error response based on request type
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Object} error - Processed error object
- */
-const sendErrorResponse = (req, res, error) => {
-  const isApiRequest = req.originalUrl.startsWith("/api");
-  const isDevelopment = process.env.NODE_ENV === "development";
-
-  if (isApiRequest) {
-    // API response structure
-    const response = {
-      success: false,
-      status: error.status,
-      message: error.message || "An unexpected error occurred",
-      code: error.statusCode,
-    };
-
-    // Only include details in development mode
-    if (isDevelopment) {
-      response.stack = error.stack;
-
-      // Include validation details if present
-      if (error.errors) {
-        response.errors = error.errors;
-      }
-    }
-
-    return res.status(error.statusCode).json(response);
-  } else {
-    // Handle web view errors
-    return res.status(error.statusCode).render("error", {
-      title: "Something went wrong",
-      msg: isDevelopment
-        ? error.message
-        : "An error occurred. Please try again later.",
-    });
-  }
-};
-
-/**
- * Generates a unique ID for error tracking
- * @returns {string} A unique error identifier
- */
-const generateErrorId = () => {
-  return (
-    Date.now().toString(36) +
-    Math.random().toString(36).substr(2, 5).toUpperCase()
+// 404 handler for undefined routes
+const notFoundHandler = (req, res, next) => {
+  const error = new AppError(
+    `Route ${req.originalUrl} not found`,
+    404,
+    "ROUTE_NOT_FOUND"
   );
+  next(error);
 };
 
-module.exports = errorHandler;
+module.exports = {
+  errorHandler,
+  asyncHandler,
+  notFoundHandler,
+};

@@ -18,7 +18,10 @@ const { rolesRoutes } = require("./roles");
 const { cityRoutes } = require("./city");
 const { authMiddleware } = require("./middlewares/authMiddleware");
 const { PrismaClient } = require("@prisma/client");
-const errorHandler = require("./middlewares/error-handler");
+const {
+  notFoundHandler,
+  errorHandler,
+} = require("./middlewares/error-handler");
 const prisma = new PrismaClient();
 const morgan = require("morgan");
 
@@ -60,13 +63,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/roles", rolesRoutes);
 
 /** 404 Handler - Route Not Found */
-app.use((req, res, next) => {
-  const error = new Error(`Not Found - ${req.originalUrl}`);
-  error.status = 404;
-  next(error);
-});
+app.use(notFoundHandler);
 
 /** Global Error Handler */
-//Sapp.use(errorHandler);
-
+app.use(errorHandler);
 module.exports = app;

@@ -2,12 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const fullBookingInclude = {
   customer: true,
-  driver: {
-    include: {
-      location: true,
-      city: true,
-    },
-  },
+  driver: true,
   company: {
     include: {
       contact: true,
@@ -180,7 +175,7 @@ class BookingService {
       if (driver.status !== "online")
         throw new Error("Driver is not available");
 
-      const [updatedBooking] = await prisma.$transaction([
+      await prisma.$transaction([
         prisma.booking.update({
           where: { id: Number(bookingId) },
           data: { driverId: Number(driverId), status: "accepted" },
@@ -190,6 +185,9 @@ class BookingService {
           data: { status: "on_trip" },
         }),
       ]);
+
+      const updatedBooking = await this.findById(bookingId);
+
       return updatedBooking;
     } catch (error) {
       throw error;
@@ -301,34 +299,6 @@ class BookingService {
     }
   }
 
-  // async cancelBooking(id) {
-  //   try {
-  //     const booking = await prisma.booking.findUnique({
-  //       where: { id: Number(id) },
-  //       include: { driver: true },
-  //     });
-  //     if (!booking) throw new Error("Booking not found");
-  //     if (["completed", "cancelled"].includes(booking.status)) {
-  //       throw new Error(
-  //         "Cannot cancel a booking that is already completed or cancelled"
-  //       );
-  //     }
-  //     const updatedBooking = await prisma.booking.update({
-  //       where: { id: Number(id) },
-  //       data: { status: "cancelled" },
-  //     });
-  //     if (booking.driverId) {
-  //       await prisma.driver.update({
-  //         where: { id: booking.driverId },
-  //         data: { status: "online" },
-  //       });
-  //     }
-  //     return updatedBooking;
-  //   } catch (error) {
-  //     throw new Error(`Failed to cancel booking: ${error.message}`);
-  //   }
-  // }
-
   async acceptBooking(id) {
     try {
       const booking = await prisma.booking.findUnique({
@@ -343,16 +313,21 @@ class BookingService {
         throw new Error("Cannot accept booking without a driver assigned");
       }
 
-      const updatedBooking = await prisma.booking.update({
-        where: { id: Number(id) },
-        data: { status: "accepted" },
-        include: fullBookingInclude,
-      });
+      await prisma.$transaction([
+        await prisma.booking.update({
+          where: { id: Number(id) },
+          data: { status: "accepted" },
+          include: fullBookingInclude,
+        }),
+        await prisma.driver.update({
+          where: { id: booking.driverId },
+          data: { status: "on_trip" },
+        }),
+      ]);
 
-      // Update driver status to "on_trip"
-      await prisma.driver.update({
-        where: { id: booking.driverId },
-        data: { status: "on_trip" },
+      const updatedBooking = await prisma.booking.findUnique({
+        where: { id: Number(id) },
+        include: fullBookingInclude,
       });
 
       return updatedBooking;
