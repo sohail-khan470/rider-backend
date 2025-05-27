@@ -1,6 +1,5 @@
 const { PrismaClient } = require("@prisma/client");
 const { comparePassword, generateToken } = require("../utils/passwordUtils");
-const { AppError } = require("../utils/errorUtils");
 
 const prisma = new PrismaClient();
 
@@ -8,20 +7,30 @@ const login = async (email, password) => {
   try {
     // 1. Check SuperAdmin
     const superAdmin = await prisma.superAdmin.findUnique({ where: { email } });
+
     if (superAdmin) {
       const isValid = await comparePassword(password, superAdmin.password);
-      if (!isValid) throw new AppError("Invalid credentials", 401);
+      if (!isValid) {
+        return {
+          success: false,
+          error: "Invalid credentials",
+          statusCode: 401,
+        };
+      }
 
       return {
-        token: generateToken({
-          id: superAdmin.id,
-          role: "super_admin",
-        }),
-        user: {
-          id: superAdmin.id,
-          email: superAdmin.email,
-          name: superAdmin.name,
-          role: "super_admin",
+        success: true,
+        data: {
+          token: generateToken({
+            id: superAdmin.id,
+            role: "super_admin",
+          }),
+          user: {
+            id: superAdmin.id,
+            email: superAdmin.email,
+            name: superAdmin.name,
+            role: "super_admin",
+          },
         },
       };
     }
@@ -41,11 +50,23 @@ const login = async (email, password) => {
       },
     });
 
-    if (!user) throw new AppError("Invalid credentials", 401);
+    if (!user) {
+      return {
+        success: false,
+        error: "Invalid credentials",
+        statusCode: 401,
+      };
+    }
 
     // 3. Validate Password
     const isValid = await comparePassword(password, user.password);
-    if (!isValid) throw new AppError("Invalid credentials", 401);
+    if (!isValid) {
+      return {
+        success: false,
+        error: "Invalid credentials",
+        statusCode: 401,
+      };
+    }
 
     // 4. Extract Permissions from Database
     const permissions = user.role.permissions.map((rp) => rp.permission.name);
@@ -72,19 +93,27 @@ const login = async (email, password) => {
       },
     };
 
-    // 7. Special Handling for Company Admins (if needed)
+    // 7. Special Handling for Company Admins
     if (user.role.name === "company_admin") {
-      // Add any additional company_admin specific properties
       responseData.user.companyDetails = {
         id: user.companyId,
         name: user.company?.name,
       };
     }
 
-    return responseData;
+    return {
+      success: true,
+      data: responseData,
+    };
   } catch (error) {
     console.error("Login error:", error);
-    throw error;
+    return {
+      success: false,
+      error: "Internal server error",
+      statusCode: 500,
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    };
   }
 };
 
@@ -97,16 +126,19 @@ const getUserProfile = async (id) => {
 
     if (superAdmin) {
       return {
-        user: {
-          id: superAdmin.id,
-          email: superAdmin.email,
-          name: superAdmin.name,
-          role: "super_admin",
+        success: true,
+        data: {
+          user: {
+            id: superAdmin.id,
+            email: superAdmin.email,
+            name: superAdmin.name,
+            role: "super_admin",
+          },
         },
       };
     }
 
-    // 2. Check Regular Users (including Company Admins)
+    // 2. Check Regular Users
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
@@ -117,11 +149,17 @@ const getUserProfile = async (id) => {
             },
           },
         },
-        company: true, // Include full company object
+        company: true,
       },
     });
 
-    if (!user) throw new AppError("User not found", 404);
+    if (!user) {
+      return {
+        success: false,
+        error: "User not found",
+        statusCode: 404,
+      };
+    }
 
     // 3. Extract Permissions
     const permissions = user.role.permissions.map((rp) => rp.permission.name);
@@ -139,19 +177,27 @@ const getUserProfile = async (id) => {
           ? {
               id: user.company.id,
               name: user.company.name,
-              address: user.company.address, // if exists
-              email: user.company.email, // if exists
-              phone: user.company.phone, // if exists
-              // Add any other fields you have in the company model
+              address: user.company.address,
+              email: user.company.email,
+              phone: user.company.phone,
             }
           : null,
       },
     };
 
-    return profile;
+    return {
+      success: true,
+      data: profile,
+    };
   } catch (error) {
     console.error("Get profile error:", error);
-    throw error;
+    return {
+      success: false,
+      error: "Internal server error",
+      statusCode: 500,
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    };
   }
 };
 

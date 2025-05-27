@@ -18,6 +18,8 @@ async function createCompany(req, res, next) {
 }
 
 async function editCompany(req, res, next) {
+  console.log("$$$$$$Edit Company");
+  console.log(req.params);
   try {
     const { id } = req.params;
     const company = await companyService.edit(id, req.body);
@@ -65,8 +67,12 @@ async function getCompanyById(req, res, next) {
 
 // Update a company
 async function updateCompany(req, res, next) {
+  console.log("$$$$$$$$$$updating company");
+  console.log(req.params);
+  console.log(req.body);
   try {
     const { id } = req.params;
+
     const company = await companyService.update(id, req.body);
 
     res.status(StatusCodes.OK).json({
@@ -75,7 +81,11 @@ async function updateCompany(req, res, next) {
       data: company,
     });
   } catch (error) {
-    next(error);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Error updating company",
+    });
+    console.log(error);
   }
 }
 
@@ -209,4 +219,5 @@ module.exports = {
   getCustomersByCompany,
   updateStaff,
   getCompanyProfile,
+  editCompany,
 };

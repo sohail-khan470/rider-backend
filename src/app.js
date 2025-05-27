@@ -67,6 +67,6 @@ app.use((req, res, next) => {
 });
 
 /** Global Error Handler */
-app.use(errorHandler);
+//Sapp.use(errorHandler);
 
 module.exports = app;

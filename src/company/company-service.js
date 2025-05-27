@@ -288,7 +288,7 @@ class CompanyService {
       });
       return company;
     } catch (error) {
-      throw new Error(`Failed to update company: ${error.message}`);
+      throw new Error(`Failed to update company: ${error}`);
     }
   }
 }
