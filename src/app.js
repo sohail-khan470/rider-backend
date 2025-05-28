@@ -6,24 +6,21 @@ const jwt = require("jsonwebtoken");
 //** Routes **/
 
 // const rolesRoutes = require("./src/roles/roles-routes");
+const auth = require("./auth");
 const { superAdminRoutes, authContoller } = require("./auth");
 const { companyRoutes } = require("./company");
 const { bookingRoutes } = require("./bookings");
 const { customerRoutes } = require("./customer");
 const { driverRoutes } = require("./drivers");
 const { locationRoutes } = require("./location");
-const auth = require("./auth");
 const { userRoutes } = require("./user");
 const { rolesRoutes } = require("./roles");
 const { cityRoutes } = require("./city");
 const { authMiddleware } = require("./middlewares/authMiddleware");
 const { PrismaClient } = require("@prisma/client");
-const {
-  notFoundHandler,
-  errorHandler,
-} = require("./middlewares/error-handler");
 const prisma = new PrismaClient();
 const morgan = require("morgan");
+const errorHandler = require("./middlewares/error-handler");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -63,8 +60,15 @@ app.use("/api/users", userRoutes);
 app.use("/api/roles", rolesRoutes);
 
 /** 404 Handler - Route Not Found */
-app.use(notFoundHandler);
 
-/** Global Error Handler */
+app.use("*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
+
+/** Error Handler */
 app.use(errorHandler);
+
 module.exports = app;

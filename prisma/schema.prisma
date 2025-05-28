@@ -28,6 +28,9 @@ model User {
   role      Role     @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now())
 
+  // Add this line to complete the relationship
+  notifications Notification[]
+
   @@map("user")
 }
 
@@ -133,6 +136,9 @@ model Booking {
   driver   Driver?  @relation(fields: [driverId], references: [id], onDelete: SetNull)
   company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  // Add this line to complete the relationship
+  notifications Notification[]
+
   @@map("booking")
 }
 
@@ -221,7 +227,39 @@ model Company {
   customers Customer[]
   users     User[]
 
+  // Add this line to complete the relationship
+  notifications Notification[]
+
   @@map("company")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  userId    Int?
+  companyId Int?
+  bookingId Int?
+  createdAt DateTime @default(now())
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("notification")
+}
+
+enum NotificationType {
+  BOOKING_CREATED
+  BOOKING_ASSIGNED
+  BOOKING_COMPLETED
+  BOOKING_CANCELLED
+  DRIVER_ASSIGNED
+  DRIVER_STATUS_CHANGED
+  NEW_USER_REGISTERED
+  COMPANY_APPROVED
 }
 
 enum MediaType {
