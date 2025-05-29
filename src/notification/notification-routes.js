@@ -1,57 +1,63 @@
-// services/notificationService.js
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const express = require("express");
+const NotificationController = require("./notification-controller");
 
-class NotificationService {
-  async createNotification({
-    type,
-    title,
-    message,
-    userId,
-    companyId,
-    bookingId,
-  }) {
-    return await prisma.notification.create({
-      data: {
-        type,
-        title,
-        message,
-        userId,
-        companyId,
-        bookingId,
-      },
-    });
-  }
+const router = express.Router();
 
-  async getNotificationsForUser(userId) {
-    return await prisma.notification.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      include: { booking: true },
-    });
-  }
+// ================== POST Routes ==================
+router.post("/", NotificationController.createNotification);
+router.post(
+  "/company/:companyId",
+  NotificationController.createCompanyNotification
+);
 
-  async getNotificationsForCompany(companyId) {
-    return await prisma.notification.findMany({
-      where: { companyId },
-      orderBy: { createdAt: "desc" },
-      include: { booking: true, user: true },
-    });
-  }
+// ================== GET Routes (Most Specific First) ==================
+router.get("/unread", NotificationController.getAllUnreadNotifications); // Before /:id
+router.get("/recent", NotificationController.getRecentNotifications); // Before /:id
+router.get("/search", NotificationController.searchNotifications); // Before /:id
+router.get("/types", NotificationController.getNotificationTypes); // Before /type/:type
+router.get("/type/:type", NotificationController.getNotificationsByType); // Before /:id
 
-  async markAsRead(notificationId) {
-    return await prisma.notification.update({
-      where: { id: notificationId },
-      data: { isRead: true },
-    });
-  }
+// Company-specific GET routes (most specific first)
+router.get(
+  "/company/:companyId/unread",
+  NotificationController.getCompanyUnreadNotifications
+);
+// router.get(
+//   "/company/:companyId/recent",
+//   NotificationController.getRecentCompanyNotifications
+// );
+//  /api/notifications/${companyId}/recent?limit=${limit}
+router.get(
+  "/:companyId/recent",
+  NotificationController.getRecentCompanyNotifications
+);
 
-  async markAllAsRead(userId) {
-    return await prisma.notification.updateMany({
-      where: { userId, isRead: false },
-      data: { isRead: true },
-    });
-  }
-}
+router.get(
+  "/:companyId/getAll",
+  NotificationController.getCompanyNotifications
+);
 
-module.exports = new NotificationService();
+// Generic GET routes (after all specific ones)
+router.get("/", NotificationController.getAllNotifications);
+router.get("/:id", NotificationController.getNotificationById); // Now safe from conflicts
+
+// ================== PATCH Routes ==================
+router.patch(
+  "/mark-all-read",
+  NotificationController.markAllNotificationsAsRead
+); // Before /:id/read
+router.patch(
+  "/company/:companyId/mark-all-read",
+  NotificationController.markAllCompanyNotificationsAsRead
+); // Before /company/:id/read
+router.patch("/:id/read", NotificationController.markNotificationAsRead);
+router.patch(
+  "/company/:id/read",
+  NotificationController.markCompanyNotificationAsRead
+);
+
+// ================== DELETE Routes ==================
+router.delete("/:id", NotificationController.deleteNotification);
+router.delete("/company/:id", NotificationController.deleteCompanyNotification);
+
+module.exports = router;

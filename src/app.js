@@ -1,7 +1,10 @@
 const express = require("express");
+const http = require("http");
 const app = express();
+const server = http.createServer(app);
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const notificationRoutes = require("./notification/notification-routes");
 
 //** Routes **/
 
@@ -21,18 +24,27 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const morgan = require("morgan");
 const errorHandler = require("./middlewares/error-handler");
+const { notifcationRoutes } = require("./notification");
+const socketManager = require("./socket/socketManager");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// app.use(cors());
 
 app.use(
   cors({
     origin: "*", // or use '*' for all origins (not recommended for production)
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
-    credentials: true, // only if you're using cookies or sessions
+    // credentials: true, // only if you're using cookies or sessions
   })
 );
+
+const io = socketManager.initialize(server, {
+  cors: {
+    origin: ["http://localhost:5173", "http://localhost:3000"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  },
+});
 
 /** Health Check */
 app.get("/", (req, res) => {
@@ -58,6 +70,7 @@ app.use("/api/drivers", driverRoutes);
 app.use("/api/location", locationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/roles", rolesRoutes);
+app.use("/api/notifications", notifcationRoutes);
 
 /** 404 Handler - Route Not Found */
 
@@ -71,4 +84,4 @@ app.use("*", (req, res) => {
 /** Error Handler */
 app.use(errorHandler);
 
-module.exports = app;
+module.exports = server;

@@ -234,15 +234,15 @@ model Company {
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
-  type      String
+  id        Int              @id @default(autoincrement())
+  type      NotificationType
   title     String
   message   String
-  isRead    Boolean  @default(false)
+  isRead    Boolean          @default(false)
   userId    Int?
   companyId Int?
   bookingId Int?
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
 
   user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
