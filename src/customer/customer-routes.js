@@ -22,4 +22,6 @@ router.get(
   customerController.getCustomerBookings
 );
 
+router.get("/:companyId/customers", customerController.getCustomersByCompany);
+
 module.exports = router;

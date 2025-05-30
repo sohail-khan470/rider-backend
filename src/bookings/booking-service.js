@@ -160,12 +160,14 @@ class BookingService {
     }
   }
 
-  async assignDriver(bookingId, driverId) {
+  async assignDriver(bookingId, driverId, companyId) {
     try {
       const booking = await prisma.booking.findUnique({
         where: { id: Number(bookingId) },
       });
       if (!booking) throw new Error("Booking not found");
+      if (booking.companyId !== companyId)
+        throw new Error("Booking does not belong to this company");
       if (booking.driverId)
         throw new Error("Booking already has a driver assigned");
       if (booking.status !== "pending")

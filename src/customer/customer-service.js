@@ -192,6 +192,22 @@ class CustomerService {
     }
   }
 
+  async getCustomerByCompanyId(companyId) {
+    const customers = await prisma.customer.findMany({
+      where: { companyId: Number(companyId) },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return customers;
+  }
+
   async getCustomerBookings(customerId, pagination = { skip: 0, take: 10 }) {
     const bookings = await prisma.booking.findMany({
       where: {

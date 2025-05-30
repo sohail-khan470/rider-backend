@@ -24,7 +24,6 @@ async function createBooking(req, res, next) {
 async function getBookingsByCompany(req, res, next) {
   console.log("@Booking by company");
   const companyId = req.body.companyId;
-  console.log(companyId);
   try {
     const result = await bookingService.getBookingsByCompany(companyId);
 
@@ -93,7 +92,9 @@ async function updateBooking(req, res, next) {
 
 // Assign a driver to a booking
 async function assignDriver(req, res, next) {
-  console.log("@Assing Driver");
+  const companyId = req.user.companyId;
+  console.log();
+  console.log("@Assigning Driver");
   try {
     const { id } = req.params;
     const { driverId } = req.body;
@@ -105,7 +106,7 @@ async function assignDriver(req, res, next) {
       });
     }
 
-    const booking = await bookingService.assignDriver(id, driverId);
+    const booking = await bookingService.assignDriver(id, driverId, companyId);
 
     res.status(StatusCodes.OK).json({
       success: true,

@@ -16,6 +16,19 @@ async function createCustomer(req, res, next) {
   }
 }
 
+async function getCustomersByCompany(req, res, next) {
+  try {
+    const customers = await customerService.getCustomerByCompanyId(
+      req.user.companyId
+    );
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Customers retrieved successfully",
+      customers,
+    });
+  } catch (error) {}
+}
+
 // Get all customers with optional filters and pagination
 async function getAllCustomers(req, res, next) {
   try {
@@ -115,4 +128,5 @@ module.exports = {
   updateCustomer,
   deleteCustomer,
   getCustomerBookings,
+  getCustomersByCompany,
 };
