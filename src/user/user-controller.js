@@ -22,11 +22,11 @@ async function getAllUsers(req, res, next) {
     const { ...filters } = req.query;
 
     const result = await userService.findAll(filters);
-
+    console.log(result);
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Users retrieved successfully",
-      data: result.data,
+      data: result,
     });
   } catch (error) {
     next(error);

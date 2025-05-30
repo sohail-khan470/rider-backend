@@ -1,5 +1,10 @@
 const { PrismaClient } = require("@prisma/client");
-const { comparePassword, generateToken } = require("../utils/passwordUtils");
+const {
+  comparePassword,
+  generateToken,
+  hashPassword,
+} = require("../utils/passwordUtils");
+const { StatusCodes } = require("http-status-codes");
 
 const prisma = new PrismaClient();
 
@@ -14,7 +19,7 @@ const login = async (email, password) => {
         return {
           success: false,
           error: "Invalid credentials",
-          statusCode: 401,
+          statusCode: StatusCodes.UNAUTHORIZED,
         };
       }
 
@@ -54,7 +59,7 @@ const login = async (email, password) => {
       return {
         success: false,
         error: "Invalid credentials",
-        statusCode: 401,
+        statusCode: StatusCodes.UNAUTHORIZED,
       };
     }
 
@@ -64,7 +69,7 @@ const login = async (email, password) => {
       return {
         success: false,
         error: "Invalid credentials",
-        statusCode: 401,
+        statusCode: StatusCodes.UNAUTHORIZED,
       };
     }
 
@@ -110,7 +115,156 @@ const login = async (email, password) => {
     return {
       success: false,
       error: "Internal server error",
-      statusCode: 500,
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    };
+  }
+};
+
+const signup = async (userData) => {
+  try {
+    const { name, email, password, roleId, companyId } = userData;
+
+    // 1. Validate required fields
+    if (!name || !email || !password || !roleId || !companyId) {
+      return {
+        success: false,
+        error:
+          "All fields (name, email, password, roleId, companyId) are required",
+        statusCode: StatusCodes.BAD_REQUEST,
+      };
+    }
+
+    // 2. Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return {
+        success: false,
+        error: "User with this email already exists",
+        statusCode: StatusCodes.CONFLICT,
+      };
+    }
+
+    // 3. Validate role exists
+    const role = await prisma.role.findUnique({
+      where: { id: roleId },
+      include: {
+        permissions: {
+          include: { permission: true },
+        },
+      },
+    });
+
+    if (!role) {
+      return {
+        success: false,
+        error: "Invalid role specified",
+        statusCode: StatusCodes.BAD_REQUEST,
+      };
+    }
+
+    // 4. Validate company exists
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+    });
+
+    if (!company) {
+      return {
+        success: false,
+        error: "Invalid company specified",
+        statusCode: StatusCodes.BAD_REQUEST,
+      };
+    }
+
+    // 5. Hash password
+    const hashedPassword = await hashPassword(password);
+
+    // 6. Create user
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        roleId,
+        companyId,
+      },
+      include: {
+        role: {
+          include: {
+            permissions: {
+              include: { permission: true },
+            },
+          },
+        },
+        company: true,
+      },
+    });
+
+    // 7. Extract permissions
+    const permissions = newUser.role.permissions.map(
+      (rp) => rp.permission.name
+    );
+
+    // 8. Generate token
+    const tokenPayload = {
+      id: newUser.id,
+      role: newUser.role.name,
+      companyId: newUser.companyId,
+      permissions,
+    };
+
+    // 9. Prepare response data
+    const responseData = {
+      token: generateToken(tokenPayload),
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role.name,
+        companyId: newUser.companyId,
+        companyName: newUser.company?.name,
+        permissions,
+        createdAt: newUser.createdAt,
+      },
+    };
+
+    // 10. Special handling for company admins
+    if (newUser.role.name === "company_admin") {
+      responseData.user.companyDetails = {
+        id: newUser.companyId,
+        name: newUser.company?.name,
+      };
+    }
+
+    // 11. Create notification for new user registration
+    try {
+      await prisma.notification.create({
+        data: {
+          type: "NEW_USER_REGISTERED",
+          title: "New User Registered",
+          message: `${newUser.name} has registered with email ${newUser.email}`,
+          companyId: newUser.companyId,
+        },
+      });
+    } catch (notificationError) {
+      console.warn("Failed to create notification:", notificationError);
+      // Don't fail the signup if notification creation fails
+    }
+
+    return {
+      success: true,
+      data: responseData,
+    };
+  } catch (error) {
+    console.error("Signup error:", error);
+    return {
+      success: false,
+      error: "Internal server error",
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
       details:
         process.env.NODE_ENV === "development" ? error.message : undefined,
     };
@@ -157,7 +311,7 @@ const getUserProfile = async (id) => {
       return {
         success: false,
         error: "User not found",
-        statusCode: 404,
+        statusCode: StatusCodes.NOT_FOUND,
       };
     }
 
@@ -194,11 +348,11 @@ const getUserProfile = async (id) => {
     return {
       success: false,
       error: "Internal server error",
-      statusCode: 500,
+      statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
       details:
         process.env.NODE_ENV === "development" ? error.message : undefined,
     };
   }
 };
 
-module.exports = { login, getUserProfile };
+module.exports = { login, signup, getUserProfile };

@@ -7,6 +7,7 @@ const { AppError } = require("../utils/errorUtils");
  * Middleware to authenticate company admins using JWT
  */
 const authMiddleware = async (req, res, next) => {
+  console.log("im runnning");
   try {
     // Get token from authorization header
     const authHeader = req.headers.authorization;

@@ -27,7 +27,11 @@ class BookingService {
     }
   }
 
-  async create(data) {
+  async create(data, companyId) {
+    console.log(companyId, "Id");
+    if (data.companyId !== companyId)
+      throw new Error("Booking does not belong to this company");
+
     try {
       // Check if customer exists and belongs to the company
       const customer = await prisma.customer.findUnique({
@@ -90,13 +94,16 @@ class BookingService {
     return booking;
   }
 
-  async update(id, data) {
+  async update(id, data, companyId) {
     try {
       const currentBooking = await prisma.booking.findUnique({
         where: { id: Number(id) },
         include: { driver: true },
       });
       if (!currentBooking) throw new Error("Booking not found");
+
+      if (currentBooking.companyId !== companyId)
+        throw new Error("Booking does not belong to this company");
 
       // Handle driver change
       if (data.driverId && data.driverId !== currentBooking.driverId) {

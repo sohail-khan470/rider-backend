@@ -6,9 +6,10 @@ const { param } = require("./booking-routes");
 // Create a new booking
 async function createBooking(req, res, next) {
   console.log("@Create bookings");
-  console.log(req.body);
+  console.log(req.user);
+  const companyId = req.user.companyId;
   try {
-    const booking = await bookingService.create(req.body);
+    const booking = await bookingService.create(req.body, companyId);
 
     res.status(StatusCodes.CREATED).json({
       success: true,
@@ -77,7 +78,8 @@ async function updateBooking(req, res, next) {
   console.log("@Update Booking");
   try {
     const { id } = req.params;
-    const booking = await bookingService.update(id, req.body);
+    const companyId = req.user.companyId;
+    const booking = await bookingService.update(id, req.body, companyId);
 
     res.status(StatusCodes.OK).json({
       success: true,

@@ -9,8 +9,7 @@ const notificationRoutes = require("./notification/notification-routes");
 //** Routes **/
 
 // const rolesRoutes = require("./src/roles/roles-routes");
-const auth = require("./auth");
-const { superAdminRoutes, authContoller } = require("./auth");
+
 const { companyRoutes } = require("./company");
 const { bookingRoutes } = require("./bookings");
 const { customerRoutes } = require("./customer");
@@ -26,6 +25,9 @@ const morgan = require("morgan");
 const errorHandler = require("./middlewares/error-handler");
 const { notifcationRoutes } = require("./notification");
 const socketManager = require("./socket/socketManager");
+const { contactRouter } = require("./company-contact");
+const { addressRouter } = require("./company-address");
+const { login, signup, getProfile } = require("./auth/auth-controller");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -41,8 +43,8 @@ app.use(
 const io = socketManager.initialize(server, {
   cors: {
     origin: ["http://localhost:5173", "http://localhost:3000"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    //credentials: true,
   },
 });
 
@@ -55,13 +57,14 @@ app.get("/", (req, res) => {
 });
 
 /**generic auth */
-app.use("/auth/login", authContoller.loginController);
-app.use("/auth/me", authContoller.getProfile);
+app.use("/auth/login", login);
+app.use("/auth/signup", signup);
+app.use("/auth/me", getProfile);
 
 /** Routes */
-app.use("/super-admin", superAdminRoutes);
 
 app.use(authMiddleware);
+
 app.use("/api/cities", cityRoutes);
 app.use("/api/company", companyRoutes);
 app.use("/api/bookings", bookingRoutes);
@@ -71,6 +74,8 @@ app.use("/api/location", locationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/notifications", notifcationRoutes);
+app.use("/api/company-contact", contactRouter);
+app.use("/api/company-address", addressRouter);
 
 /** 404 Handler - Route Not Found */
 

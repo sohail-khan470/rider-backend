@@ -37,6 +37,8 @@ async function getAllCompanies(req, res) {
 
 // Get a company by ID
 async function getCompanyById(req, res) {
+  console.log("@get single company");
+
   const { id } = req.params;
   const company = await companyService.findById(id);
   res.status(StatusCodes.OK).json({
