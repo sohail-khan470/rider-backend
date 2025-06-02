@@ -117,8 +117,6 @@ exports.signup = async (req, res) => {
 
 // GET PROFILE CONTROLLER
 exports.getProfile = async (req, res) => {
-  console.log("&&&&&&&&&&&&&&profile");
-
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {

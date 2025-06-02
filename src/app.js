@@ -4,7 +4,6 @@ const app = express();
 const server = http.createServer(app);
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const notificationRoutes = require("./notification/notification-routes");
 
 //** Routes **/
 
@@ -70,7 +69,7 @@ app.use("/api/company", companyRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/drivers", driverRoutes);
-app.use("/api/location", locationRoutes);
+app.use("/api/locations", locationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/notifications", notifcationRoutes);

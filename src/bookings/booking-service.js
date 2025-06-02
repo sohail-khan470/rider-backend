@@ -2,7 +2,11 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const fullBookingInclude = {
   customer: true,
-  driver: true,
+  driver: {
+    include: {
+      location: true,
+    },
+  },
   company: {
     include: {
       contact: true,

@@ -394,38 +394,63 @@ class DriverService {
     companyId = null,
     cityId = null
   ) {
-    const whereConditions = [];
+    // Start building the query parts
+    const selectPart = `
+        SELECT 
+            d.*, 
+            l.*, 
+            c.name as cityName,
+            (6371 * acos(
+                cos(radians(?)) * cos(radians(l.lat)) * 
+                cos(radians(l.lng) - radians(?)) + 
+                sin(radians(?)) * sin(radians(l.lat))
+            )) AS distance
+        FROM driver d
+        JOIN location l ON d.id = l.driverId
+        JOIN city c ON d.cityId = c.id
+    `;
 
-    whereConditions.push(prisma.sql`d.status = 'online'`);
+    // Build WHERE conditions
+    const whereConditions = ["d.status = 'online'"];
+    const params = [lat, lng, lat]; // First three parameters for distance calculation
 
     if (companyId) {
-      whereConditions.push(prisma.sql`d.companyId = ${companyId}`);
+      whereConditions.push("d.companyId = ?");
+      params.push(companyId);
     }
 
     if (cityId) {
-      whereConditions.push(prisma.sql`d.cityId = ${cityId}`);
+      whereConditions.push("d.cityId = ?");
+      params.push(cityId);
     }
 
     const whereClause =
       whereConditions.length > 0
-        ? prisma.sql`WHERE ${prisma.sql.join(whereConditions, " AND ")}`
-        : prisma.sql``;
+        ? `WHERE ${whereConditions.join(" AND ")}`
+        : "";
 
-    const drivers = await prisma.$queryRaw`
-      SELECT d.*, l.*, c.name as cityName,
-        (6371 * acos(cos(radians(${lat})) * cos(radians(l.lat)) * cos(radians(l.lng) - radians(${lng})) + sin(radians(${lat})) * sin(radians(l.lat)))) AS distance
-      FROM driver d
-      JOIN location l ON d.id = l.driverId
-      JOIN city c ON d.cityId = c.id
-      ${whereClause}
-      HAVING distance < ${radius}
-      ORDER BY distance
-      LIMIT 20
+    // Add radius parameter
+    params.push(radius);
+
+    const fullQuery = `
+        ${selectPart}
+        ${whereClause}
+        HAVING distance < ?
+        ORDER BY distance
+        LIMIT 20
     `;
 
-    return drivers;
-  }
+    try {
+      console.log("Executing query:", fullQuery);
+      console.log("With parameters:", params);
 
+      const drivers = await prisma.$queryRawUnsafe(fullQuery, ...params);
+      return drivers;
+    } catch (error) {
+      console.error("Error in getNearbyDrivers:", error);
+      throw new Error(`Failed to fetch nearby drivers: ${error.message}`);
+    }
+  }
   async getDriversByCity(cityId, status = null) {
     try {
       const whereClause = {

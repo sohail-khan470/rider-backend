@@ -11,7 +11,7 @@ const comparePassword = async (password, hashedPassword) => {
   return bcrypt.compare(password, hashedPassword);
 };
 
-const generateToken = (payload, expiresIn = "1d") => {
+const generateToken = (payload, expiresIn = "7d") => {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 };
 
