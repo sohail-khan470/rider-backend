@@ -77,6 +77,7 @@ model Driver {
   city         City                 @relation(fields: [cityId], references: [id], onDelete: Cascade)
   bookings     Booking[]
   availability DriverAvailability[]
+  schedules    Schedule[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -90,7 +91,10 @@ model City {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Driver Driver[]
+  Driver             Driver[]
+  fromSchedules      Schedule[]           @relation("ScheduleFromCity")
+  toSchedules        Schedule[]           @relation("ScheduleToCity")
+  DriverAvailability DriverAvailability[]
 
   @@map("city")
 }
@@ -101,6 +105,8 @@ model DriverAvailability {
   startTime DateTime
   endTime   DateTime
   driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  City      City?    @relation(fields: [cityId], references: [id])
+  cityId    Int?
 
   @@map("driver_availability")
 }
@@ -126,17 +132,17 @@ model Booking {
   customerId  Int
   driverId    Int?
   companyId   Int
+  scheduleId  Int?
   pickup      String
   dropoff     String
   status      BookingStatus @default(pending)
   fare        Float?
   requestedAt DateTime      @default(now())
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  driver   Driver?  @relation(fields: [driverId], references: [id], onDelete: SetNull)
-  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  // Add this line to complete the relationship
+  customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  driver        Driver?        @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  company       Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  schedule      Schedule?      @relation("ScheduleReturnBookings", fields: [scheduleId], references: [id])
   notifications Notification[]
 
   @@map("booking")
@@ -223,16 +229,15 @@ model Company {
   updatedAt  DateTime @updatedAt
 
   // Relations
-  contact   CompanyContact?
-  addresses CompanyAddress[]
-  media     CompanyMedia[]
-  profile   CompanyProfile?
-  bookings  Booking[]
-  drivers   Driver[]
-  customers Customer[]
-  users     User[]
-
-  // Add this line to complete the relationship
+  contact       CompanyContact?
+  addresses     CompanyAddress[]
+  media         CompanyMedia[]
+  profile       CompanyProfile?
+  bookings      Booking[]
+  drivers       Driver[]
+  customers     Customer[]
+  users         User[]
+  schedules     Schedule[]
   notifications Notification[]
 
   @@map("company")
@@ -254,6 +259,37 @@ model Notification {
   booking Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("notification")
+}
+
+model Schedule {
+  id               Int            @id @default(autoincrement())
+  companyId        Int
+  driverId         Int
+  fromCityId       Int
+  toCityId         Int
+  departure        DateTime
+  estimatedArrival DateTime
+  returnTime       DateTime?
+  status           ScheduleStatus @default(scheduled)
+  company          Company        @relation(fields: [companyId], references: [id])
+  driver           Driver         @relation(fields: [driverId], references: [id])
+  fromCity         City           @relation("ScheduleFromCity", fields: [fromCityId], references: [id])
+  toCity           City           @relation("ScheduleToCity", fields: [toCityId], references: [id])
+  returnBookings   Booking[]      @relation("ScheduleReturnBookings")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("schedule")
+}
+
+enum ScheduleStatus {
+  scheduled
+  in_progress
+  arrived
+  returning
+  completed
+  cancelled
 }
 
 enum NotificationType {

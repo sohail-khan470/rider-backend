@@ -26,6 +26,7 @@ const { notifcationRoutes } = require("./notification");
 const socketManager = require("./socket/socketManager");
 const { contactRouter } = require("./company-contact");
 const { addressRouter } = require("./company-address");
+const { scheduleRouter, scheduleRoutes } = require("./schedule");
 const { login, signup, getProfile } = require("./auth/auth-controller");
 
 app.use(express.json());
@@ -75,6 +76,7 @@ app.use("/api/roles", rolesRoutes);
 app.use("/api/notifications", notifcationRoutes);
 app.use("/api/company-contact", contactRouter);
 app.use("/api/company-address", addressRouter);
+app.use("/api/schedule", scheduleRoutes);
 
 /** 404 Handler - Route Not Found */
 
