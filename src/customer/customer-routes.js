@@ -4,15 +4,11 @@ const customerController = require("./customer-controller");
 
 router.post("/", customerController.createCustomer);
 
-router.get("/", customerController.getAllCustomers);
+router.get("/getAll", customerController.getAllCustomers);
 
 router.get("/:id", customerController.getCustomerById);
 
-router.put(
-  "/:id",
-
-  customerController.updateCustomer
-);
+router.patch("/:id", customerController.updateCustomer);
 
 router.delete("/:id", customerController.deleteCustomer);
 

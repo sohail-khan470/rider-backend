@@ -72,7 +72,6 @@ async function updateCustomer(req, res, next) {
   try {
     const { id } = req.params;
     const customer = await customerService.update(id, req.body);
-
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Customer updated successfully",
