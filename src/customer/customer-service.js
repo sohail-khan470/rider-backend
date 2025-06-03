@@ -68,26 +68,50 @@ class CustomerService {
   }
 
   async findAll(filters = {}, pagination = { skip: 0, take: 10 }) {
-    const customers = await prisma.customer.findMany({
-      where: filters,
-      skip: pagination.skip,
-      take: pagination.take,
-      include: {
-        company: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        _count: {
-          select: {
-            bookings: true,
-          },
-        },
-      },
-    });
+    // Convert companyId to number if it exists
+    const newFilters = {
+      ...filters,
+      companyId: filters.companyId ? Number(filters.companyId) : undefined,
+    };
 
-    const total = await prisma.customer.count({ where: filters });
+    // Extract search term if it exists
+    const { search, ...restFilters } = newFilters;
+
+    // Build the where clause
+    const where = { ...restFilters };
+
+    // Add search conditions if search term exists
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { phone: { contains: search } },
+      ];
+    }
+
+    console.log("Final where clause:", where);
+
+    const [customers, total] = await Promise.all([
+      prisma.customer.findMany({
+        where,
+        skip: pagination.skip,
+        take: pagination.take,
+        include: {
+          company: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              bookings: true,
+            },
+          },
+        },
+      }),
+      prisma.customer.count({ where }), // Use the same where clause for counting
+    ]);
 
     return {
       data: customers,
@@ -95,6 +119,7 @@ class CustomerService {
         total,
         page: Math.floor(pagination.skip / pagination.take) + 1,
         pageSize: pagination.take,
+        totalPages: Math.ceil(total / pagination.take),
       },
     };
   }
