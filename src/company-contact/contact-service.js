@@ -141,58 +141,6 @@ class ContactService {
       throw new Error(`Failed to delete contact: ${error.message}`);
     }
   }
-
-  // Check if email already exists (excluding current contact if updating)
-  //   async checkEmailExists(email, excludeId = null) {
-  //     try {
-  //       const where = { email };
-
-  //       if (excludeId) {
-  //         where.id = { not: parseInt(excludeId) };
-  //       }
-
-  //       const existingContact = await prisma.companyContact.findUnique({
-  //         where,
-  //       });
-
-  //       return !!existingContact;
-  //     } catch (error) {
-  //       throw new Error(`Failed to check email existence: ${error.message}`);
-  //     }
-  //   }
-
-  // Validate contact data
-  //   validateContactData(data, isUpdate = false) {
-  //     const errors = [];
-
-  //     if (!isUpdate || data.companyId !== undefined) {
-  //       if (!data.companyId) {
-  //         errors.push("Company ID is required");
-  //       }
-  //     }
-
-  //     if (!isUpdate || data.phone !== undefined) {
-  //       if (!data.phone) {
-  //         errors.push("Phone number is required");
-  //       }
-  //     }
-
-  //     if (!isUpdate || data.email !== undefined) {
-  //       if (!data.email) {
-  //         errors.push("Email is required");
-  //       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-  //         errors.push("Invalid email format");
-  //       }
-  //     }
-
-  //     if (!isUpdate || data.website !== undefined) {
-  //       if (!data.website) {
-  //         errors.push("Website is required");
-  //       }
-  //     }
-
-  //     return errors;
-  //   }
 }
 
 module.exports = new ContactService();
