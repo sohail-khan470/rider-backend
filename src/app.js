@@ -26,7 +26,7 @@ const { notifcationRoutes } = require("./notification");
 const socketManager = require("./socket/socketManager");
 const { contactRouter } = require("./company-contact");
 const { addressRouter } = require("./company-address");
-const { scheduleRouter, scheduleRoutes } = require("./schedule");
+const { scheduleRoutes } = require("./schedule");
 const { login, signup, getProfile } = require("./auth/auth-controller");
 
 app.use(express.json());
@@ -47,6 +47,8 @@ const io = socketManager.initialize(server, {
     //credentials: true,
   },
 });
+
+app.use(morgan("dev"));
 
 /** Health Check */
 app.get("/", (req, res) => {
