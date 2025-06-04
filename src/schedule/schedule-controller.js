@@ -11,7 +11,6 @@ async function createSchedule(req, res) {
       data: schedule,
     });
   } catch (error) {
-    console.log(error);
     res.status(StatusCodes.BAD_REQUEST).json({
       success: false,
       message: error.message,

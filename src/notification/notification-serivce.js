@@ -399,7 +399,6 @@ class NotificationService {
   }
 
   async getRecentNotifications(limit = 10) {
-    console.log("%%%%%%%recent notifications");
     try {
       return await this.prisma.notification.findMany({
         take: Number(limit),
@@ -430,13 +429,11 @@ class NotificationService {
         },
       });
     } catch (error) {
-      console.log(error);
       throw new Error(`Failed to fetch recent notifications: ${error.message}`);
     }
   }
 
   async getRecentCompanyNotifications(companyId, limit = 10) {
-    console.log("%%%%%%%recent company notifications");
     try {
       return await this.prisma.notification.findMany({
         where: {
@@ -464,7 +461,6 @@ class NotificationService {
         },
       });
     } catch (error) {
-      console.log(error);
       throw new Error(
         `Failed to fetch recent company notifications: ${error.message}`
       );

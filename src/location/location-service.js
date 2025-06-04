@@ -73,7 +73,6 @@ async function searchLocation(searchTerm) {
     const uniqueResults = deduplicateLocations(combinedResults);
     return uniqueResults.slice(0, 10);
   } catch (error) {
-    console.log(error);
     throw new AppError(
       "Error searching locations",
       StatusCodes.INTERNAL_SERVER_ERROR
@@ -160,7 +159,6 @@ async function getAllLocations() {
       country: location.country,
     }));
   } catch (error) {
-    console.log(error);
     throw new AppError(
       "Error fetching locations",
       StatusCodes.INTERNAL_SERVER_ERROR

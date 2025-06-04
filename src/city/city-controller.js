@@ -27,7 +27,6 @@ async function getAllCities(req, res, next) {
       result,
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 }

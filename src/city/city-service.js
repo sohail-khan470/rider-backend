@@ -120,7 +120,6 @@ class CityService {
   }
 
   async searchCities(query) {
-    console.log(query);
     try {
       const cities = await this.prisma.city.findMany({
         where: {

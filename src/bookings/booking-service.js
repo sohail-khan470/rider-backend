@@ -32,7 +32,6 @@ class BookingService {
   }
 
   async create(data, companyId) {
-    console.log(companyId, "Id");
     if (data.companyId !== companyId)
       throw new Error("Booking does not belong to this company");
 

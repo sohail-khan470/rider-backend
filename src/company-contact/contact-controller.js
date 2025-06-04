@@ -11,7 +11,6 @@ async function createContact(req, res) {
       data: contact,
     });
   } catch (error) {
-    console.log(error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message,

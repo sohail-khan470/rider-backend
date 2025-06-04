@@ -3,7 +3,6 @@ const roleService = require("./roles-service");
 
 // Create a new role
 async function createRole(req, res, next) {
-  console.log(req.body, "^^^^^^^");
   try {
     const role = await roleService.create(req.body);
     res.status(StatusCodes.CREATED).json({

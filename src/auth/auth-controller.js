@@ -44,7 +44,6 @@ exports.login = async (req, res) => {
 
 // SIGNUP CONTROLLER
 exports.signup = async (req, res) => {
-  console.log("signup controller");
   try {
     const { name, email, password, roleId, companyId } = req.body;
 

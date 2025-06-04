@@ -5,8 +5,6 @@ const { param } = require("./booking-routes");
 
 // Create a new booking
 async function createBooking(req, res, next) {
-  console.log("@Create bookings");
-  console.log(req.user);
   const companyId = req.user.companyId;
   try {
     const booking = await bookingService.create(req.body, companyId);
@@ -22,7 +20,6 @@ async function createBooking(req, res, next) {
 }
 
 async function getBookingsByCompany(req, res, next) {
-  console.log("@Booking by company");
   const companyId = req.body.companyId;
   try {
     const result = await bookingService.getBookingsByCompany(companyId);
@@ -39,7 +36,6 @@ async function getBookingsByCompany(req, res, next) {
 
 // Get all bookings with optional filters and pagination
 async function getAllBookings(req, res, next) {
-  console.log("@get all bookings");
   try {
     const { filters } = req.query;
 
@@ -57,7 +53,6 @@ async function getAllBookings(req, res, next) {
 
 // Get a booking by ID
 async function getBookingById(req, res, next) {
-  console.log("@get single booking");
   try {
     const { id } = req.params;
     const booking = await bookingService.findById(id);
@@ -74,7 +69,6 @@ async function getBookingById(req, res, next) {
 
 // Update a booking
 async function updateBooking(req, res, next) {
-  console.log("@Update Booking");
   try {
     const { id } = req.params;
     const companyId = req.user.companyId;
@@ -93,8 +87,6 @@ async function updateBooking(req, res, next) {
 // Assign a driver to a booking
 async function assignDriver(req, res, next) {
   const companyId = req.user.companyId;
-  console.log();
-  console.log("@Assigning Driver");
   try {
     const { id } = req.params;
     const { driverId } = req.body;
@@ -114,7 +106,6 @@ async function assignDriver(req, res, next) {
       data: booking,
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 }

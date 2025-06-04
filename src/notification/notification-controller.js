@@ -161,7 +161,6 @@ class NotificationController {
   }
 
   async getRecentNotifications(req, res) {
-    console.log("%%%%%%%recent notifications");
     try {
       const { limit = 10 } = req.query;
       const notifications = await NotificationService.getRecentNotifications(
@@ -183,11 +182,8 @@ class NotificationController {
           limit
         );
 
-      console.log(notifications);
-
       res.json(notifications);
     } catch (error) {
-      console.log(error);
       res.status(500).json({ message: error.message });
     }
   }

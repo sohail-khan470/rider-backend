@@ -46,49 +46,6 @@ class DriverService {
     }
   }
 
-  // async findAll(filters = {}, companyId) {
-  //   console.log(companyId);
-  //   console.log("Finding all drivers");
-
-  //   try {
-  //     // Execute both queries in parallel
-  //     const [drivers, total] = await Promise.all([
-  //       prisma.driver.findMany({
-  //         where: filters,
-  //         include: {
-  //           company: {
-  //             select: {
-  //               id: true,
-  //               name: true,
-  //             },
-  //           },
-  //           city: {
-  //             select: {
-  //               id: true,
-  //               name: true,
-  //             },
-  //           },
-  //           location: true,
-  //           _count: {
-  //             select: {
-  //               bookings: true,
-  //             },
-  //           },
-  //         },
-  //       }),
-  //       prisma.driver.count({
-  //         where: filters,
-  //       }),
-  //     ]);
-
-  //     return {
-  //       data: drivers,
-  //     };
-  //   } catch (error) {
-  //     console.error("Error in DriverService.findAll:", error);
-  //     throw new Error("Failed to retrieve drivers: " + error.message);
-  //   }
-  // }
   async findAll(filters = {}, companyId) {
     try {
       // Merge companyId into filters
@@ -267,7 +224,6 @@ class DriverService {
   }
 
   async updateStatus(id, status) {
-    console.log(id, status);
     try {
       if (!["offline", "online", "on_trip"].includes(status)) {
         throw new Error(
@@ -487,7 +443,6 @@ class DriverService {
   }
 
   async getDriversByCompany(companyId, status = null) {
-    console.log("&&&&&&&&& dravers");
     try {
       const whereClause = {
         companyId: Number(companyId),
