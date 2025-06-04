@@ -22,11 +22,6 @@ router.get(
   "/company/:companyId/unread",
   NotificationController.getCompanyUnreadNotifications
 );
-// router.get(
-//   "/company/:companyId/recent",
-//   NotificationController.getRecentCompanyNotifications
-// );
-//  /api/notifications/${companyId}/recent?limit=${limit}
 router.get(
   "/:companyId/recent",
   NotificationController.getRecentCompanyNotifications

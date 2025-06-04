@@ -1,41 +1,33 @@
 const { PrismaClient } = require("@prisma/client");
-const { z } = require("zod");
 const prisma = new PrismaClient();
-
-// Validation schemas
-const createCustomerSchema = z.object({
-  name: z.string().min(2, "Customer name must be at least 2 characters"),
-  email: z.string().email("Invalid email format"),
-  phone: z.string().min(10, "Phone number must be at least 10 characters"),
-  companyId: z.number().int().positive("Company ID must be a positive integer"),
-});
-
-const updateCustomerSchema = z.object({
-  name: z
-    .string()
-    .min(2, "Customer name must be at least 2 characters")
-    .optional(),
-  email: z.string().email("Invalid email format").optional(),
-  phone: z
-    .string()
-    .min(10, "Phone number must be at least 10 characters")
-    .optional(),
-  companyId: z
-    .number()
-    .int()
-    .positive("Company ID must be a positive integer")
-    .optional(),
-});
 
 class CustomerService {
   async create(data) {
     try {
       // Validate input data
-      const validatedData = createCustomerSchema.parse(data);
+      if (!data.name || data.name.length < 2) {
+        throw new Error("Customer name must be at least 2 characters");
+      }
+
+      if (!data.email || !this.validateEmail(data.email)) {
+        throw new Error("Invalid email format");
+      }
+
+      if (!data.phone || data.phone.length < 10) {
+        throw new Error("Phone number must be at least 10 characters");
+      }
+
+      if (
+        !data.companyId ||
+        !Number.isInteger(data.companyId) ||
+        data.companyId <= 0
+      ) {
+        throw new Error("Company ID must be a positive integer");
+      }
 
       // Check if customer with email already exists
       const existingCustomer = await prisma.customer.findUnique({
-        where: { email: validatedData.email },
+        where: { email: data.email },
       });
 
       if (existingCustomer) {
@@ -44,7 +36,7 @@ class CustomerService {
 
       // Check if company exists
       const company = await prisma.company.findUnique({
-        where: { id: validatedData.companyId },
+        where: { id: data.companyId },
       });
 
       if (!company) {
@@ -53,16 +45,16 @@ class CustomerService {
 
       // Create customer
       const customer = await prisma.customer.create({
-        data: validatedData,
+        data: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          companyId: data.companyId,
+        },
       });
 
       return customer;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
@@ -153,13 +145,30 @@ class CustomerService {
   async update(id, data) {
     try {
       // Validate input data
-      const validatedData = updateCustomerSchema.parse(data);
+      if (data.name && data.name.length < 2) {
+        throw new Error("Customer name must be at least 2 characters");
+      }
+
+      if (data.email && !this.validateEmail(data.email)) {
+        throw new Error("Invalid email format");
+      }
+
+      if (data.phone && data.phone.length < 10) {
+        throw new Error("Phone number must be at least 10 characters");
+      }
+
+      if (
+        data.companyId &&
+        (!Number.isInteger(data.companyId) || data.companyId <= 0)
+      ) {
+        throw new Error("Company ID must be a positive integer");
+      }
 
       // If updating email, check if it's already taken
-      if (validatedData.email) {
+      if (data.email) {
         const existingCustomer = await prisma.customer.findFirst({
           where: {
-            email: validatedData.email,
+            email: data.email,
             id: { not: Number(id) },
           },
         });
@@ -170,9 +179,9 @@ class CustomerService {
       }
 
       // If updating company, check if it exists
-      if (validatedData.companyId) {
+      if (data.companyId) {
         const company = await prisma.company.findUnique({
-          where: { id: validatedData.companyId },
+          where: { id: data.companyId },
         });
 
         if (!company) {
@@ -183,7 +192,7 @@ class CustomerService {
       // Update customer
       const customer = await prisma.customer.update({
         where: { id: Number(id) },
-        data: validatedData,
+        data: data,
         include: {
           company: {
             select: {
@@ -196,11 +205,6 @@ class CustomerService {
 
       return customer;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
@@ -266,6 +270,12 @@ class CustomerService {
         pageSize: pagination.take,
       },
     };
+  }
+
+  // Helper method to validate email format
+  validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
   }
 }
 

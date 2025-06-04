@@ -12,8 +12,6 @@ async function createCompany(req, res) {
 }
 
 async function editCompany(req, res) {
-  console.log("$$$$$$Edit Company");
-  console.log(req.params);
   const { id } = req.params;
   const company = await companyService.edit(id, req.body);
   res.status(StatusCodes.OK).json({
@@ -37,8 +35,6 @@ async function getAllCompanies(req, res) {
 
 // Get a company by ID
 async function getCompanyById(req, res) {
-  console.log("@get single company");
-
   const { id } = req.params;
   const company = await companyService.findById(id);
   res.status(StatusCodes.OK).json({
@@ -50,11 +46,8 @@ async function getCompanyById(req, res) {
 
 // Update a company
 async function updateCompany(req, res) {
-  console.log("$$$$$$$$$$updating company");
-  console.log(req.params);
   const { id } = req.params;
   const response = await companyService.update(id, req.body);
-  console.log(response);
   res.status(StatusCodes.OK).json({
     success: true,
     message: "Company updated successfully",
@@ -64,7 +57,6 @@ async function updateCompany(req, res) {
 
 // Delete a company
 async function deleteCompany(req, res) {
-  console.log("delete company");
   const { id } = req.params;
   await companyService.delete(id);
   res.status(StatusCodes.OK).json({
@@ -113,7 +105,6 @@ async function getStaffByCompany(req, res) {
 }
 
 async function getCustomersByCompany(req, res) {
-  console.log("@get-CustomerBy Company");
   const { companyId } = req.params;
   const customers = await companyService.getCustomerByCompany(companyId);
   res.status(StatusCodes.OK).json({

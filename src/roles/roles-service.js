@@ -1,36 +1,27 @@
 const { PrismaClient } = require("@prisma/client");
-const { z } = require("zod");
 const prisma = new PrismaClient();
-
-// Validation schemas
-const createRoleSchema = z.object({
-  name: z.string().min(2, "Role name must be at least 2 characters"),
-  companyId: z.number().int().positive("Company ID must be a positive integer"),
-  permissions: z
-    .array(
-      z.number().int().positive("Permission ID must be a positive integer")
-    )
-    .optional(),
-});
-
-const updateRoleSchema = z.object({
-  name: z.string().min(2, "Role name must be at least 2 characters").optional(),
-  permissions: z
-    .array(
-      z.number().int().positive("Permission ID must be a positive integer")
-    )
-    .optional(),
-});
 
 class RoleService {
   async create(data) {
     try {
       // Validate input data
-      const validatedData = createRoleSchema.parse(data);
+      if (!data.name || data.name.length < 2) {
+        throw new Error("Role name must be at least 2 characters");
+      }
+      if (
+        !data.companyId ||
+        !Number.isInteger(data.companyId) ||
+        data.companyId <= 0
+      ) {
+        throw new Error("Company ID must be a positive integer");
+      }
+      if (data.permissions && !Array.isArray(data.permissions)) {
+        throw new Error("Permissions must be an array");
+      }
 
       // Check if company exists
       const company = await prisma.company.findUnique({
-        where: { id: validatedData.companyId },
+        where: { id: data.companyId },
       });
 
       if (!company) {
@@ -40,8 +31,8 @@ class RoleService {
       // Check if role with same name already exists for this company
       const existingRole = await prisma.role.findFirst({
         where: {
-          name: validatedData.name,
-          companyId: validatedData.companyId,
+          name: data.name,
+          companyId: data.companyId,
         },
       });
 
@@ -54,29 +45,34 @@ class RoleService {
         // Create role
         const newRole = await prismaClient.role.create({
           data: {
-            name: validatedData.name,
-            companyId: validatedData.companyId,
+            name: data.name,
+            companyId: data.companyId,
           },
         });
 
         // Assign permissions if provided
-        if (validatedData.permissions && validatedData.permissions.length > 0) {
+        if (data.permissions && data.permissions.length > 0) {
+          // Verify all permissions are positive integers
+          if (data.permissions.some((p) => !Number.isInteger(p) || p <= 0)) {
+            throw new Error("Permission ID must be a positive integer");
+          }
+
           // Verify all permissions exist
           const permissionCount = await prismaClient.permission.count({
             where: {
               id: {
-                in: validatedData.permissions,
+                in: data.permissions,
               },
             },
           });
 
-          if (permissionCount !== validatedData.permissions.length) {
+          if (permissionCount !== data.permissions.length) {
             throw new Error("One or more permissions do not exist");
           }
 
           // Create role permissions
           await Promise.all(
-            validatedData.permissions.map((permissionId) =>
+            data.permissions.map((permissionId) =>
               prismaClient.rolePermission.create({
                 data: {
                   roleId: newRole.id,
@@ -102,11 +98,6 @@ class RoleService {
 
       return role;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }
@@ -165,7 +156,12 @@ class RoleService {
   async update(id, data) {
     try {
       // Validate input data
-      const validatedData = updateRoleSchema.parse(data);
+      if (data.name && data.name.length < 2) {
+        throw new Error("Role name must be at least 2 characters");
+      }
+      if (data.permissions && !Array.isArray(data.permissions)) {
+        throw new Error("Permissions must be an array");
+      }
 
       // Get current role
       const currentRole = await prisma.role.findUnique({
@@ -177,10 +173,10 @@ class RoleService {
       }
 
       // If updating name, check if it's already taken in the same company
-      if (validatedData.name) {
+      if (data.name) {
         const existingRole = await prisma.role.findFirst({
           where: {
-            name: validatedData.name,
+            name: data.name,
             companyId: currentRole.companyId,
             id: { not: Number(id) },
           },
@@ -196,26 +192,31 @@ class RoleService {
       // Start transaction
       const role = await prisma.$transaction(async (prismaClient) => {
         // Update role name if provided
-        if (validatedData.name) {
+        if (data.name) {
           await prismaClient.role.update({
             where: { id: Number(id) },
-            data: { name: validatedData.name },
+            data: { name: data.name },
           });
         }
 
         // Update permissions if provided
-        if (validatedData.permissions) {
-          // Verify all permissions exist
-          if (validatedData.permissions.length > 0) {
+        if (data.permissions) {
+          // Verify all permissions are positive integers
+          if (data.permissions.some((p) => !Number.isInteger(p) || p <= 0)) {
+            throw new Error("Permission ID must be a positive integer");
+          }
+
+          // Verify all permissions exist if array is not empty
+          if (data.permissions.length > 0) {
             const permissionCount = await prismaClient.permission.count({
               where: {
                 id: {
-                  in: validatedData.permissions,
+                  in: data.permissions,
                 },
               },
             });
 
-            if (permissionCount !== validatedData.permissions.length) {
+            if (permissionCount !== data.permissions.length) {
               throw new Error("One or more permissions do not exist");
             }
           }
@@ -226,9 +227,9 @@ class RoleService {
           });
 
           // Create new role permissions
-          if (validatedData.permissions.length > 0) {
+          if (data.permissions.length > 0) {
             await Promise.all(
-              validatedData.permissions.map((permissionId) =>
+              data.permissions.map((permissionId) =>
                 prismaClient.rolePermission.create({
                   data: {
                     roleId: Number(id),
@@ -255,11 +256,6 @@ class RoleService {
 
       return role;
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new Error(
-          `Validation error: ${error.errors.map((e) => e.message).join(", ")}`
-        );
-      }
       throw error;
     }
   }

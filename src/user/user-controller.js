@@ -4,7 +4,6 @@ const userService = require("./user-service");
 // Create a new user
 async function createUser(req, res, next) {
   try {
-    console.log("user-controller----------", req.body);
     const user = await userService.create(req.body.data);
     res.status(StatusCodes.CREATED).json({
       success: true,
@@ -22,7 +21,6 @@ async function getAllUsers(req, res, next) {
     const { ...filters } = req.query;
 
     const result = await userService.findAll(filters);
-    console.log(result);
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Users retrieved successfully",
