@@ -56,11 +56,13 @@ class ScheduleService {
       // Update driver status if needed
       await prisma.driver.update({
         where: { id: data.driverId },
-        data: { status: "offline" }, // or 'unavailable' if you add that status
+        data: { status: "on_trip" }, // or 'unavailable' if you add that status
       });
 
       return schedule;
     } catch (error) {
+      console.log(error);
+
       throw error;
     }
   }
@@ -81,7 +83,7 @@ class ScheduleService {
         },
       });
 
-      return schedule;
+      return this.getScheduleById(schedule.id);
     } catch (error) {
       throw error;
     }

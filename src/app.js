@@ -78,7 +78,7 @@ app.use("/api/roles", rolesRoutes);
 app.use("/api/notifications", notifcationRoutes);
 app.use("/api/company-contact", contactRouter);
 app.use("/api/company-address", addressRouter);
-app.use("/api/schedule", scheduleRoutes);
+app.use("/api/schedules", scheduleRoutes);
 
 /** 404 Handler - Route Not Found */
 
