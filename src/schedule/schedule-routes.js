@@ -3,10 +3,12 @@ const router = express.Router();
 const scheduleController = require("./schedule-controller");
 
 // Specific routes first
+
 router.get(
-  "/available-return/:cityId/:destinationCityId",
+  "/available-return-schedules/",
   scheduleController.getAvailableReturnSchedules
 );
+// single schedule
 router.get("/company/:companyId", scheduleController.getCompanySchedules);
 
 // ID-based routes

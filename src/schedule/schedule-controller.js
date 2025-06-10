@@ -133,21 +133,23 @@ async function completeSchedule(req, res) {
 // Get available return schedules
 async function getAvailableReturnSchedules(req, res) {
   try {
-    const { cityId, destinationCityId } = req.params;
+    const { fromCityName, toCityName } = req.query;
+
     const { date } = req.query;
 
     const schedules = await scheduleService.getAvailableReturnSchedules(
-      parseInt(cityId),
-      parseInt(destinationCityId),
+      fromCityName,
+      toCityName,
       date ? new Date(date) : null
     );
-
     res.status(StatusCodes.OK).json({
       success: true,
       message: "Available return schedules retrieved successfully",
       data: schedules,
     });
   } catch (error) {
+    console.log(error);
+
     res.status(StatusCodes.BAD_REQUEST).json({
       success: false,
       message: error.message,

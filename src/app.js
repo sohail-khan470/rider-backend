@@ -23,7 +23,6 @@ const prisma = new PrismaClient();
 const morgan = require("morgan");
 const errorHandler = require("./middlewares/error-handler");
 const { notifcationRoutes } = require("./notification");
-const socketManager = require("./socket/socketManager");
 const { contactRouter } = require("./company-contact");
 const { addressRouter } = require("./company-address");
 const { scheduleRoutes } = require("./schedule");
@@ -39,14 +38,6 @@ app.use(
     // credentials: true, // only if you're using cookies or sessions
   })
 );
-
-const io = socketManager.initialize(server, {
-  cors: {
-    origin: ["http://localhost:5173", "http://localhost:3000"],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    //credentials: true,
-  },
-});
 
 app.use(morgan("dev"));
 

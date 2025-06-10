@@ -92,13 +92,17 @@ class ScheduleService {
   async cancelSchedule(id) {
     try {
       const schedule = await prisma.schedule.update({
-        where: { id },
+        where: { id: Number(id) },
         data: {
           status: "cancelled",
           updatedAt: new Date(),
         },
         include: {
           returnBookings: true,
+          company: true,
+          driver: true,
+          fromCity: true,
+          toCity: true,
         },
       });
 
@@ -115,7 +119,6 @@ class ScheduleService {
         });
       }
 
-      // Update driver status if needed
       await prisma.driver.update({
         where: { id: schedule.driverId },
         data: { status: "online" },
@@ -123,6 +126,7 @@ class ScheduleService {
 
       return schedule;
     } catch (error) {
+      console.log(error);
       throw error;
     }
   }
@@ -130,14 +134,20 @@ class ScheduleService {
   async startTrip(id) {
     try {
       const schedule = await prisma.schedule.update({
-        where: { id },
+        where: { id: Number(id) },
         data: {
           status: "in_progress",
           updatedAt: new Date(),
         },
+        include: {
+          returnBookings: true,
+          company: true,
+          driver: true,
+          fromCity: true,
+          toCity: true,
+        },
       });
 
-      // Update driver status
       await prisma.driver.update({
         where: { id: schedule.driverId },
         data: { status: "on_trip" },
@@ -151,7 +161,7 @@ class ScheduleService {
   async markArrived(id, returnTime = null) {
     try {
       const schedule = await prisma.schedule.update({
-        where: { id },
+        where: { id: Number(id) },
         data: {
           status: "arrived",
           returnTime,
@@ -159,13 +169,11 @@ class ScheduleService {
         },
       });
 
-      // Update driver status to available for return trips
       await prisma.driver.update({
         where: { id: schedule.driverId },
         data: { status: "online" },
       });
 
-      // Create availability window for return trips
       if (returnTime) {
         await prisma.driverAvailability.create({
           data: {
@@ -192,7 +200,6 @@ class ScheduleService {
         },
       });
 
-      // Update driver status
       await prisma.driver.update({
         where: { id: schedule.driverId },
         data: { status: "on_trip" },
@@ -213,8 +220,6 @@ class ScheduleService {
           updatedAt: new Date(),
         },
       });
-
-      // Update driver status
       await prisma.driver.update({
         where: { id: schedule.driverId },
         data: { status: "online" },
@@ -226,39 +231,47 @@ class ScheduleService {
     }
   }
 
-  async getAvailableReturnSchedules(cityId, destinationCityId, date = null) {
+  async getAvailableReturnSchedules(fromCityName, toCityName) {
     try {
-      const where = {
-        toCityId: cityId,
-        fromCityId: destinationCityId,
-        status: "arrived",
-        returnTime: { not: null },
-      };
+      // Normalize input city names
+      const normalizedFrom = fromCityName.trim().toLowerCase();
+      const normalizedTo = toCityName.trim().toLowerCase();
 
-      if (date) {
-        where.returnTime = {
-          gte: new Date(date.setHours(0, 0, 0, 0)),
-          lte: new Date(date.setHours(23, 59, 59, 999)),
-        };
+      const allCities = await prisma.city.findMany({
+        select: { id: true, name: true },
+      });
+
+      // Find matching cities
+      const startCity = allCities.find(
+        (c) => c.name.trim().toLowerCase() === normalizedFrom
+      );
+      const destinationCity = allCities.find(
+        (c) => c.name.trim().toLowerCase() === normalizedTo
+      );
+
+      if (!startCity || !destinationCity) {
+        throw new Error(
+          `Cities not found: ${!startCity ? fromCityName : ""} ${
+            !destinationCity ? toCityName : ""
+          }`
+        );
       }
 
-      return await prisma.schedule.findMany({
-        where,
-        include: {
-          driver: true,
-          toCity: true,
-          fromCity: true,
-          company: true,
-        },
-        orderBy: {
-          returnTime: "asc",
+      const schedules = await prisma.schedule.findMany({
+        where: {
+          fromCityId: startCity.id,
+          toCityId: destinationCity.id,
+          returnTime: { not: null },
         },
       });
+
+      console.log(schedules);
+      return schedules;
     } catch (error) {
+      console.error("Error checking schedules:", error);
       throw error;
     }
   }
-
   async getScheduleById(id) {
     try {
       return await prisma.schedule.findUnique({
