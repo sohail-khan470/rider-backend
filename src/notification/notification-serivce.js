@@ -277,6 +277,7 @@ class NotificationService {
   }
 
   async markNotificationAsRead(notificationId) {
+    console.log("INSIDE SERVICe");
     try {
       const notification = await this.prisma.notification.update({
         where: { id: Number(notificationId) },
@@ -286,8 +287,11 @@ class NotificationService {
         },
       });
 
+      console.log(notification, "{{{{{{{{{{{");
+
       return notification;
     } catch (error) {
+      console.log(error);
       if (error.message.includes("Record to update not found")) {
         throw new Error("Notification not found");
       }

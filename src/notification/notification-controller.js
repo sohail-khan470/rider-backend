@@ -88,11 +88,17 @@ class NotificationController {
   }
 
   async markNotificationAsRead(req, res) {
+    console.log("@@@@@@@ mark single as read");
     try {
-      const { id } = req.params;
-      const notification = await NotificationService.markNotificationAsRead(id);
+      console.log(req.params);
+      const { companyId } = req.params;
+      const notification = await NotificationService.markNotificationAsRead(
+        companyId
+      );
+      console.log(notification);
       res.json(notification);
     } catch (error) {
+      console.log(error);
       if (error.message === "Notification not found") {
         return res.status(404).json({ message: error.message });
       }
@@ -115,6 +121,7 @@ class NotificationController {
   }
 
   async markAllNotificationsAsRead(req, res) {
+    console.log("@@@@@@@ mark as read");
     try {
       const result = await NotificationService.markAllNotificationsAsRead();
       res.json(result);

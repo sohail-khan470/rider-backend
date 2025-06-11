@@ -70,7 +70,7 @@ class ScheduleService {
   async updateSchedule(id, data) {
     try {
       const schedule = await prisma.schedule.update({
-        where: { id },
+        where: { id: Number(id) },
         data: {
           ...data,
           updatedAt: new Date(),
@@ -186,6 +186,7 @@ class ScheduleService {
 
       return schedule;
     } catch (error) {
+      console.log(error);
       throw error;
     }
   }
@@ -193,7 +194,7 @@ class ScheduleService {
   async startReturn(id) {
     try {
       const schedule = await prisma.schedule.update({
-        where: { id },
+        where: { id: Number(id) },
         data: {
           status: "returning",
           updatedAt: new Date(),

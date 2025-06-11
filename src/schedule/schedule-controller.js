@@ -20,6 +20,7 @@ async function createSchedule(req, res) {
 
 // Update a schedule
 async function updateSchedule(req, res) {
+  console.log(req.params);
   try {
     const { id } = req.params;
     const schedule = await scheduleService.updateSchedule(id, req.body);
@@ -29,6 +30,7 @@ async function updateSchedule(req, res) {
       data: schedule,
     });
   } catch (error) {
+    console.log(error);
     res.status(StatusCodes.BAD_REQUEST).json({
       success: false,
       message: error.message,
@@ -96,6 +98,7 @@ async function markArrived(req, res) {
 
 // Start return trip
 async function startReturn(req, res) {
+  console.log(req.params);
   try {
     const { id } = req.params;
     const schedule = await scheduleService.startReturn(id);
@@ -105,6 +108,7 @@ async function startReturn(req, res) {
       data: schedule,
     });
   } catch (error) {
+    console.log(error);
     res.status(StatusCodes.BAD_REQUEST).json({
       success: false,
       message: error.message,

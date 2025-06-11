@@ -5,6 +5,7 @@ const router = express.Router();
 
 // ================== POST Routes ==================
 router.post("/", NotificationController.createNotification);
+router.patch("/:companyId/read", NotificationController.markNotificationAsRead);
 router.post(
   "/company/:companyId",
   NotificationController.createCompanyNotification
