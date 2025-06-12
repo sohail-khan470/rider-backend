@@ -60,29 +60,23 @@ class CustomerService {
   }
 
   async findAll(filters = {}, pagination = { skip: 0, take: 10 }) {
-    // Convert companyId to number if it exists
     const newFilters = {
       ...filters,
       companyId: filters.companyId ? Number(filters.companyId) : undefined,
     };
 
-    // Extract search term if it exists
     const { search, ...restFilters } = newFilters;
-
-    // Build the where clause
     const where = { ...restFilters };
 
-    // Add search conditions if search term exists
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
+        { name: { contains: search } }, // removed mode
+        { email: { contains: search } }, // removed mode
         { phone: { contains: search } },
       ];
     }
 
-    console.log("Final where clause:", where);
-
+    // Rest of your code remains the same...
     const [customers, total] = await Promise.all([
       prisma.customer.findMany({
         where,
@@ -102,7 +96,7 @@ class CustomerService {
           },
         },
       }),
-      prisma.customer.count({ where }), // Use the same where clause for counting
+      prisma.customer.count({ where }),
     ]);
 
     return {

@@ -167,6 +167,13 @@ class ScheduleService {
           returnTime,
           updatedAt: new Date(),
         },
+        include: {
+          returnBookings: true,
+          company: true,
+          driver: true,
+          fromCity: true,
+          toCity: true,
+        },
       });
 
       await prisma.driver.update({
@@ -199,6 +206,13 @@ class ScheduleService {
           status: "returning",
           updatedAt: new Date(),
         },
+        include: {
+          returnBookings: true,
+          company: true,
+          driver: true,
+          fromCity: true,
+          toCity: true,
+        },
       });
 
       await prisma.driver.update({
@@ -215,10 +229,17 @@ class ScheduleService {
   async completeSchedule(id) {
     try {
       const schedule = await prisma.schedule.update({
-        where: { id },
+        where: { id: Number(id) },
         data: {
           status: "completed",
           updatedAt: new Date(),
+        },
+        include: {
+          returnBookings: true,
+          company: true,
+          driver: true,
+          fromCity: true,
+          toCity: true,
         },
       });
       await prisma.driver.update({
