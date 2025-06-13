@@ -26,7 +26,12 @@ const { notifcationRoutes } = require("./notification");
 const { contactRouter } = require("./company-contact");
 const { addressRouter } = require("./company-address");
 const { scheduleRoutes } = require("./schedule");
-const { login, signup, getProfile } = require("./auth/auth-controller");
+const {
+  login,
+  signup,
+  getProfile,
+  registerSuperAdmin,
+} = require("./auth/auth-controller");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -50,6 +55,7 @@ app.get("/", (req, res) => {
 });
 
 /**generic auth */
+app.use("/auth/super-admin/register", registerSuperAdmin);
 app.use("/auth/login", login);
 app.use("/auth/signup", signup);
 app.use("/auth/me", getProfile);

@@ -18,6 +18,30 @@ async function createSchedule(req, res) {
   }
 }
 
+//assign booking to schedule
+
+async function assignBooking(req, res) {
+  try {
+    const { id: scheduleId } = req.params;
+    const { bookingId } = req.body;
+    const schedule = await scheduleService.assignBookingToSchedule(
+      bookingId,
+      scheduleId
+    );
+    res.status(StatusCodes.OK).json({
+      success: true,
+      message: "Schedule updated successfully",
+      data: schedule,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(StatusCodes.BAD_REQUEST).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 // Update a schedule
 async function updateSchedule(req, res) {
   console.log(req.params);
@@ -219,4 +243,5 @@ module.exports = {
   getAvailableReturnSchedules,
   getScheduleById,
   getCompanySchedules,
+  assignBooking,
 };

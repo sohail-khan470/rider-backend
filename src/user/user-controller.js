@@ -91,6 +91,7 @@ async function authenticateUser(req, res, next) {
 }
 
 async function getAdminUsers(req, res, next) {
+  console.log(req.params);
   try {
     const { companyId } = req.params;
 

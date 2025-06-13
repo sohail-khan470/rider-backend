@@ -10,6 +10,8 @@ router.get(
 );
 // single schedule
 router.get("/company/:companyId", scheduleController.getCompanySchedules);
+//assign booking to schedule
+router.patch("/:id/assign-booking", scheduleController.assignBooking);
 
 // ID-based routes
 router.get("/:id", scheduleController.getScheduleById);

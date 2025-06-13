@@ -116,6 +116,7 @@ const login = async (email, password) => {
       data: responseData,
     };
   } catch (error) {
+    console.log(error);
     throw new AppError("Login error", StatusCodes.INTERNAL_SERVER_ERROR);
     console.error("Login error:", error);
     // return {
@@ -366,4 +367,24 @@ const getUserProfile = async (id) => {
   }
 };
 
-module.exports = { login, signup, getUserProfile };
+const registerSuperAdmin = async (email, password) => {
+  console.log(email, password);
+  try {
+    const hashedPassword = await hashPassword(password);
+    const superAdmin = await prisma.superAdmin.create({
+      data: {
+        email,
+        password: hashedPassword,
+      },
+    });
+    return superAdmin;
+  } catch (error) {
+    console.error("Register Super Admin error:", error);
+    throw new AppError(
+      "Registration failed",
+      StatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
+};
+
+module.exports = { login, signup, getUserProfile, registerSuperAdmin };

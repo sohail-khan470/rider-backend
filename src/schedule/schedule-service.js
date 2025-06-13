@@ -352,6 +352,42 @@ class ScheduleService {
       throw error;
     }
   }
+
+  async assignBookingToSchedule(bookingId, scheduleId) {
+    try {
+      // Verify both records exist first
+      const [schedule, booking] = await Promise.all([
+        prisma.schedule.findUnique({ where: { id: Number(scheduleId) } }),
+        prisma.booking.findUnique({ where: { id: Number(bookingId) } }),
+      ]);
+
+      if (!schedule) {
+        throw new Error(`Schedule with ID ${scheduleId} not found`);
+      }
+
+      if (!booking) {
+        throw new Error(`Booking with ID ${bookingId} not found`);
+      }
+
+      // Perform the update
+      const updatedSchedule = await prisma.schedule.update({
+        where: { id: Number(scheduleId) },
+        data: {
+          returnBookings: {
+            connect: { id: Number(bookingId) },
+          },
+        },
+        include: {
+          returnBookings: true, // Optional: include the relation in the response
+        },
+      });
+
+      return updatedSchedule;
+    } catch (error) {
+      console.error("Failed to assign booking to schedule:", error);
+      throw error; // Re-throw after logging
+    }
+  }
 }
 
 module.exports = new ScheduleService();

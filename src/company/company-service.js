@@ -6,14 +6,6 @@ const prisma = new PrismaClient();
 class CompanyService {
   async create(data) {
     try {
-      const existingCompany = await prisma.company.findUnique({
-        where: { email: data.email },
-      });
-
-      if (existingCompany) {
-        throw new Error("Company with this email already exists");
-      }
-
       const company = await prisma.company.create({
         data: {
           ...data,
@@ -21,8 +13,7 @@ class CompanyService {
         },
       });
 
-      const { password, ...companyWithoutPassword } = company;
-      return companyWithoutPassword;
+      return company;
     } catch (error) {
       throw new Error(`Failed to create company: ${error.message}`);
     }
@@ -161,40 +152,41 @@ class CompanyService {
 
   async update(id, data) {
     try {
-      if (data.email) {
-        const existingCompany = await prisma.company.findFirst({
-          where: {
-            email: data.email,
-            id: { not: Number(id) },
-          },
-        });
-
-        if (existingCompany) {
-          throw new Error("Email is already taken by another company");
-        }
-      }
-
       const companyData = {
         name: data.name,
         timezone: data.timezone,
       };
-      const contact = data.contact;
-      const profile = data.profile;
 
-      await prisma.$transaction([
-        prisma.company.update({
+      console.log(companyData);
+
+      let contact;
+      let profile;
+
+      if (data.contact && data.profile) {
+        contact = data.contact;
+        profile = data.profile;
+
+        await prisma.$transaction([
+          prisma.company.update({
+            where: { id: Number(id) },
+            data: companyData,
+          }),
+          prisma.companyContact.update({
+            where: { companyId: Number(id) },
+            data: contact,
+          }),
+          prisma.companyProfile.update({
+            where: { companyId: Number(id) },
+            data: profile,
+          }),
+        ]);
+      } else {
+        const updatedCompany = await prisma.company.update({
           where: { id: Number(id) },
           data: companyData,
-        }),
-        prisma.companyContact.update({
-          where: { companyId: Number(id) },
-          data: contact,
-        }),
-        prisma.companyProfile.update({
-          where: { companyId: Number(id) },
-          data: profile,
-        }),
-      ]);
+        });
+        return updatedCompany;
+      }
 
       const company = await this.findById(id);
       return company;

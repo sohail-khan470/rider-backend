@@ -36,7 +36,6 @@ class BookingService {
       throw new Error("Booking does not belong to this company");
 
     try {
-      // Check if customer exists and belongs to the company
       const customer = await prisma.customer.findUnique({
         where: { id: data.customerId },
       });
@@ -45,7 +44,6 @@ class BookingService {
         throw new Error("Customer does not belong to this company");
       }
 
-      // If driver is specified, check and update driver status
       if (data.driverId) {
         const driver = await prisma.driver.findUnique({
           where: { id: data.driverId },
@@ -132,7 +130,6 @@ class BookingService {
         }
       }
 
-      // Handle status changes
       if (data.status) {
         if (
           (data.status === "completed" || data.status === "cancelled") &&

@@ -1,6 +1,11 @@
 const { PrismaClient } = require("@prisma/client");
 const { AppError } = require("../utils/errorUtils");
-const { login, signup, getUserProfile } = require("./auth-service");
+const {
+  login,
+  signup,
+  getUserProfile,
+  registerSuperAdmin,
+} = require("./auth-service");
 const jwt = require("jsonwebtoken");
 const { StatusCodes } = require("http-status-codes");
 
@@ -217,4 +222,16 @@ exports.getCompanies = async (req, res) => {
       message: "Internal server error",
     });
   }
+};
+
+exports.registerSuperAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const admin = await registerSuperAdmin(email, password);
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      message: "Super Admin registered successfully",
+      data: admin,
+    });
+  } catch (error) {}
 };

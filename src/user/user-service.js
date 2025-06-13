@@ -260,22 +260,32 @@ class UserService {
   }
 
   async getAdmins(companyId) {
+    const parsedId = Number(companyId);
+    if (!companyId || isNaN(parsedId)) {
+      throw new Error("Invalid company ID");
+    }
+
     try {
+      // First find the ADMIN role for this company
       const adminRole = await prisma.role.findFirst({
         where: {
-          name: "Admin",
-          companyId: Number(companyId),
+          name: "ADMIN",
+          users: {
+            some: {
+              companyId: parsedId,
+            },
+          },
         },
+        select: { id: true },
       });
 
-      if (!adminRole) {
-        return [];
-      }
+      if (!adminRole) return [];
 
-      const adminUsers = await prisma.user.findMany({
+      // Then find users with this role and company
+      return await prisma.user.findMany({
         where: {
           roleId: adminRole.id,
-          companyId: Number(companyId),
+          companyId: parsedId,
         },
         select: {
           id: true,
@@ -296,10 +306,9 @@ class UserService {
           },
         },
       });
-
-      return adminUsers;
     } catch (error) {
-      throw new Error(`Failed to get admin users: ${error.message}`);
+      console.error("[getAdmins Error]", error);
+      throw new Error("Failed to fetch admin users");
     }
   }
 }
