@@ -4,7 +4,6 @@ const prisma = new PrismaClient();
 class CustomerService {
   async create(data) {
     try {
-      // Validate input data
       if (!data.name || data.name.length < 2) {
         throw new Error("Customer name must be at least 2 characters");
       }
@@ -25,7 +24,6 @@ class CustomerService {
         throw new Error("Company ID must be a positive integer");
       }
 
-      // Check if customer with email already exists
       const existingCustomer = await prisma.customer.findUnique({
         where: { email: data.email },
       });
@@ -34,7 +32,6 @@ class CustomerService {
         throw new Error("Customer with this email already exists");
       }
 
-      // Check if company exists
       const company = await prisma.company.findUnique({
         where: { id: data.companyId },
       });
@@ -43,7 +40,6 @@ class CustomerService {
         throw new Error("Company not found");
       }
 
-      // Create customer
       const customer = await prisma.customer.create({
         data: {
           name: data.name,
@@ -70,13 +66,12 @@ class CustomerService {
 
     if (search) {
       where.OR = [
-        { name: { contains: search } }, // removed mode
-        { email: { contains: search } }, // removed mode
+        { name: { contains: search } },
+        { email: { contains: search } },
         { phone: { contains: search } },
       ];
     }
 
-    // Rest of your code remains the same...
     const [customers, total] = await Promise.all([
       prisma.customer.findMany({
         where,
@@ -138,7 +133,6 @@ class CustomerService {
 
   async update(id, data) {
     try {
-      // Validate input data
       if (data.name && data.name.length < 2) {
         throw new Error("Customer name must be at least 2 characters");
       }
@@ -158,7 +152,6 @@ class CustomerService {
         throw new Error("Company ID must be a positive integer");
       }
 
-      // If updating email, check if it's already taken
       if (data.email) {
         const existingCustomer = await prisma.customer.findFirst({
           where: {
@@ -172,7 +165,6 @@ class CustomerService {
         }
       }
 
-      // If updating company, check if it exists
       if (data.companyId) {
         const company = await prisma.company.findUnique({
           where: { id: data.companyId },
@@ -183,7 +175,6 @@ class CustomerService {
         }
       }
 
-      // Update customer
       const customer = await prisma.customer.update({
         where: { id: Number(id) },
         data: data,
@@ -266,7 +257,6 @@ class CustomerService {
     };
   }
 
-  // Helper method to validate email format
   validateEmail(email) {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);

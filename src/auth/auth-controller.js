@@ -119,7 +119,6 @@ exports.signup = async (req, res) => {
   }
 };
 
-// GET PROFILE CONTROLLER
 exports.getProfile = async (req, res) => {
   const authHeader = req.headers.authorization;
 
@@ -174,9 +173,6 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// HELPER CONTROLLERS FOR SIGNUP PROCESS
-
-// GET ROLES CONTROLLER (for dropdown in signup form)
 exports.getRoles = async (req, res) => {
   try {
     const roles = await prisma.role.findMany({
@@ -200,7 +196,6 @@ exports.getRoles = async (req, res) => {
   }
 };
 
-// GET COMPANIES CONTROLLER (for dropdown in signup form)
 exports.getCompanies = async (req, res) => {
   try {
     const companies = await prisma.company.findMany({

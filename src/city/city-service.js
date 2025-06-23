@@ -21,10 +21,6 @@ class CityService {
   }
 
   async getAllCities(options = {}) {
-    // const page = options.page || 1;
-    // const limit = options.limit || 10;
-    // const skip = (page - 1) * limit;
-
     try {
       const [cities, total] = await this.prisma.$transaction([
         this.prisma.city.findMany({
@@ -39,12 +35,6 @@ class CityService {
 
       return {
         data: cities,
-        // meta: {
-        //   total,
-        //   page,
-        //   limit,
-        //   totalPages: Math.ceil(total / limit),
-        // },
       };
     } catch (error) {
       throw new Error(`Failed to fetch cities: ${error.message}`);

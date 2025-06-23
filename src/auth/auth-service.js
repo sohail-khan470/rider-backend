@@ -18,11 +18,6 @@ const login = async (email, password) => {
       const isValid = await comparePassword(password, superAdmin.password);
       if (!isValid) {
         throw new AppError("Invalid credentials", StatusCodes.UNAUTHORIZED);
-        // return {
-        //   success: false,
-        //   error: "Invalid credentials",
-        //   statusCode: StatusCodes.UNAUTHORIZED,
-        // };
       }
 
       return {
@@ -59,23 +54,12 @@ const login = async (email, password) => {
 
     if (!user) {
       throw new AppError("Invalid credentials", StatusCodes.UNAUTHORIZED);
-      // return {
-      //   success: false,
-      //   error: "Invalid credentials",
-      //   statusCode: StatusCodes.UNAUTHORIZED,
-      // };
     }
 
     // 3. Validate Password
     const isValid = await comparePassword(password, user.password);
     if (!isValid) {
       throw new AppError("Invalid credentials", StatusCodes.UNAUTHORIZED);
-
-      // return {
-      //   success: false,
-      //   error: "Invalid credentials",
-      //   statusCode: StatusCodes.UNAUTHORIZED,
-      // };
     }
 
     // 4. Extract Permissions from Database
@@ -118,14 +102,6 @@ const login = async (email, password) => {
   } catch (error) {
     console.log(error);
     throw new AppError("Login error", StatusCodes.INTERNAL_SERVER_ERROR);
-    console.error("Login error:", error);
-    // return {
-    //   success: false,
-    //   error: "Internal server error",
-    //   statusCode: StatusCodes.INTERNAL_SERVER_ERROR,
-    //   details:
-    //     process.env.NODE_ENV === "development" ? error.message : undefined,
-    // };
   }
 };
 
@@ -153,11 +129,6 @@ const signup = async (userData) => {
         "User with this email already exists",
         StatusCodes.CONFLICT
       );
-      // return {
-      //   success: false,
-      //   error: "User with this email already exists",
-      //   statusCode: StatusCodes.CONFLICT,
-      // };
     }
 
     // 3. Validate role exists
@@ -171,11 +142,6 @@ const signup = async (userData) => {
     });
 
     if (!role) {
-      // return {
-      //   success: false,
-      //   error: "Invalid role specified",
-      //   statusCode: StatusCodes.BAD_REQUEST,
-      // };
       throw new AppError("Invalid role specified", StatusCodes.BAD_REQUEST);
     }
 
@@ -185,18 +151,11 @@ const signup = async (userData) => {
     });
 
     if (!company) {
-      // return {
-      //   success: false,
-      //   error: "Invalid company specified",
-      //   statusCode: StatusCodes.BAD_REQUEST,
-      // };
       throw new AppError("Invalid company specified", StatusCodes.BAD_REQUEST);
     }
 
-    // 5. Hash password
     const hashedPassword = await hashPassword(password);
 
-    // 6. Create user
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -317,8 +276,6 @@ const getUserProfile = async (id) => {
         company: true,
       },
     });
-
-    console.log(user.company, "UUUUUUUUUUUU");
 
     if (!user) {
       return {

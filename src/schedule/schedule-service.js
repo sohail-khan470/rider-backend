@@ -50,6 +50,7 @@ class ScheduleService {
           fromCity: true,
           toCity: true,
           company: true,
+          returnBookings: true,
         },
       });
 

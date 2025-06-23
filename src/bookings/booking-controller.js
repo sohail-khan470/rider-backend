@@ -1,7 +1,5 @@
-// src/controllers/bookingController.js
 const { StatusCodes } = require("http-status-codes");
 const bookingService = require("./booking-service");
-const { param } = require("./booking-routes");
 
 // Create a new booking
 async function createBooking(req, res, next) {
@@ -34,7 +32,6 @@ async function getBookingsByCompany(req, res, next) {
   }
 }
 
-// Get all bookings with optional filters and pagination
 async function getAllBookings(req, res, next) {
   try {
     const { filters } = req.query;
@@ -51,7 +48,6 @@ async function getAllBookings(req, res, next) {
   }
 }
 
-// Get a booking by ID
 async function getBookingById(req, res, next) {
   try {
     const { id } = req.params;
@@ -67,7 +63,6 @@ async function getBookingById(req, res, next) {
   }
 }
 
-// Update a booking
 async function updateBooking(req, res, next) {
   try {
     const { id } = req.params;
@@ -84,7 +79,7 @@ async function updateBooking(req, res, next) {
   }
 }
 
-// Assign a driver to a booking
+//assign driver to a booking
 async function assignDriver(req, res, next) {
   const companyId = req.user.companyId;
   try {
@@ -110,7 +105,6 @@ async function assignDriver(req, res, next) {
   }
 }
 
-// Cancel a booking
 async function cancelBooking(req, res, next) {
   try {
     const { id } = req.params;
@@ -126,7 +120,6 @@ async function cancelBooking(req, res, next) {
   }
 }
 
-// Complete a booking
 async function completeBooking(req, res, next) {
   try {
     const { id } = req.params;
@@ -143,7 +136,6 @@ async function completeBooking(req, res, next) {
   }
 }
 
-// Get booking statistics
 async function getBookingStatistics(req, res, next) {
   try {
     const { companyId } = req.params;
@@ -160,7 +152,6 @@ async function getBookingStatistics(req, res, next) {
   }
 }
 
-// Accept a booking (new function)
 async function acceptBooking(req, res, next) {
   try {
     const { id } = req.params;
@@ -176,7 +167,6 @@ async function acceptBooking(req, res, next) {
   }
 }
 
-// Complete a booking (already exists)
 async function completeBooking(req, res, next) {
   try {
     const { id } = req.params;
@@ -215,7 +205,7 @@ module.exports = {
   updateBooking,
   assignDriver,
   cancelBooking,
-  acceptBooking, // Export the new function
+  acceptBooking,
   completeBooking,
   getBookingStatistics,
   getBookingsByCompany,

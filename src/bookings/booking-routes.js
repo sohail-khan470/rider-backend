@@ -9,7 +9,6 @@ router.get("/:id", bookingController.getBookingById);
 router.put("/:id", bookingController.updateBooking);
 router.patch("/:id/assign", bookingController.assignDriver);
 
-// Separate endpoints for status changes
 router.patch("/:id/cancel", bookingController.cancelBooking);
 router.patch("/:id/accept", bookingController.acceptBooking); // New endpoint
 router.patch("/:id/complete", bookingController.completeBooking);

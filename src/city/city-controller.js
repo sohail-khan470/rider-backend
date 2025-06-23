@@ -1,7 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const CityService = require("./city-service");
 
-// Create a new city
 async function createCity(req, res, next) {
   try {
     const city = await CityService.createCity(req.body);
@@ -16,7 +15,6 @@ async function createCity(req, res, next) {
   }
 }
 
-// Get all cities with pagination
 async function getAllCities(req, res, next) {
   try {
     const result = await CityService.getAllCities();
@@ -31,7 +29,6 @@ async function getAllCities(req, res, next) {
   }
 }
 
-// Get a city by ID
 async function getCityById(req, res, next) {
   try {
     const { id } = req.params;
@@ -47,7 +44,6 @@ async function getCityById(req, res, next) {
   }
 }
 
-// Update a city
 async function updateCity(req, res, next) {
   try {
     const { id } = req.params;
@@ -63,7 +59,6 @@ async function updateCity(req, res, next) {
   }
 }
 
-// Delete a city
 async function deleteCity(req, res, next) {
   try {
     const { id } = req.params;
@@ -78,7 +73,6 @@ async function deleteCity(req, res, next) {
   }
 }
 
-// Search cities by name
 async function searchCities(req, res, next) {
   try {
     const { query } = req.query;

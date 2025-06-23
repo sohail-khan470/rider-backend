@@ -324,3 +324,28 @@ enum DriverStatus {
   online
   on_trip
 }
+
+/**
+ * model Payment {
+ * id           Int           @id @default(autoincrement())
+ * bookingId    Int
+ * booking      Booking       @relation(fields: [bookingId], references: [id])
+ * amount       Float
+ * status       PaymentStatus @default(pending)
+ * method       String        @default("cash") // Only cash allowed
+ * collectedBy  Int? // Driver ID who collected
+ * collectedAt  DateTime?
+ * verifiedBy   Int? // Admin ID who verified
+ * verifiedAt   DateTime?
+ * receiptPhoto String?
+ * notes        String? //this note is related to payments or other things ("customer paid 5$ less due to late arrival")
+ * isDisputed   Boolean       @default(false)
+ * @@map("payment")
+ * }
+ * enum PaymentStatus {
+ * pending
+ * captured
+ * disputed
+ * refunded
+ * }
+ */
