@@ -273,7 +273,7 @@ model Schedule {
   returnTime       DateTime?
   status           ScheduleStatus @default(scheduled)
   company          Company        @relation(fields: [companyId], references: [id])
-  driver           Driver         @relation(fields: [driverId], references: [id])
+  driver           Driver         @relation(fields: [driverId], references: [id], onDelete: Cascade)
   fromCity         City           @relation("ScheduleFromCity", fields: [fromCityId], references: [id])
   toCity           City           @relation("ScheduleToCity", fields: [toCityId], references: [id])
   returnBookings   Booking[]      @relation("ScheduleReturnBookings")

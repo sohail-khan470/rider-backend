@@ -152,42 +152,51 @@ class CompanyService {
 
   async update(id, data) {
     try {
-      const companyData = {
-        name: data.name,
-        timezone: data.timezone,
-      };
+      const companyData = {};
 
-      console.log(companyData);
+      // Only include fields that are provided
+      if (data.name !== undefined) companyData.name = data.name;
+      if (data.timezone !== undefined) companyData.timezone = data.timezone;
 
-      let contact;
-      let profile;
+      // Prepare the transaction queries
+      const transactionQueries = [];
 
-      if (data.contact && data.profile) {
-        contact = data.contact;
-        profile = data.profile;
-
-        await prisma.$transaction([
+      // Always include the company update if there's data to update
+      if (Object.keys(companyData).length > 0) {
+        transactionQueries.push(
           prisma.company.update({
             where: { id: Number(id) },
             data: companyData,
-          }),
-          prisma.companyContact.update({
-            where: { companyId: Number(id) },
-            data: contact,
-          }),
-          prisma.companyProfile.update({
-            where: { companyId: Number(id) },
-            data: profile,
-          }),
-        ]);
-      } else {
-        const updatedCompany = await prisma.company.update({
-          where: { id: Number(id) },
-          data: companyData,
-        });
-        return updatedCompany;
+          })
+        );
       }
 
+      // Add contact update if contact data is provided
+      if (data.contact) {
+        transactionQueries.push(
+          prisma.companyContact.update({
+            where: { companyId: Number(id) },
+            data: data.contact,
+          })
+        );
+      }
+
+      // Add profile update if profile data is provided
+      if (data.profile) {
+        transactionQueries.push(
+          prisma.companyProfile.update({
+            where: { companyId: Number(id) },
+            data: data.profile,
+          })
+        );
+      }
+
+      // Only execute transaction if there are queries to run
+      if (transactionQueries.length > 0) {
+        await prisma.$transaction(transactionQueries);
+      }
+
+      // Return the updated company with all relations
       const company = await this.findById(id);
       return company;
     } catch (error) {

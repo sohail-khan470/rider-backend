@@ -32,6 +32,7 @@ const {
   getProfile,
   registerSuperAdmin,
 } = require("./auth/auth-controller");
+const { statsRoutes } = require("./stats");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -59,6 +60,7 @@ app.use("/auth/super-admin/register", registerSuperAdmin);
 app.use("/auth/login", login);
 app.use("/auth/signup", signup);
 app.use("/auth/me", getProfile);
+app.use("/dashboard-stats", statsRoutes);
 
 /** Routes */
 

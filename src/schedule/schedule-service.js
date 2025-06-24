@@ -346,7 +346,7 @@ class ScheduleService {
           returnBookings: true,
         },
         orderBy: {
-          departure: "asc",
+          createdAt: "desc",
         },
       });
     } catch (error) {
