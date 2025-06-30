@@ -153,15 +153,13 @@ class CompanyService {
   async update(id, data) {
     try {
       const companyData = {};
+      const transactionQueries = [];
 
       // Only include fields that are provided
       if (data.name !== undefined) companyData.name = data.name;
       if (data.timezone !== undefined) companyData.timezone = data.timezone;
 
-      // Prepare the transaction queries
-      const transactionQueries = [];
-
-      // Always include the company update if there's data to update
+      // Update company if there's data to update
       if (Object.keys(companyData).length > 0) {
         transactionQueries.push(
           prisma.company.update({
@@ -171,34 +169,41 @@ class CompanyService {
         );
       }
 
-      // Add contact update if contact data is provided
+      // Handle contact data - use upsert instead of update
       if (data.contact) {
         transactionQueries.push(
-          prisma.companyContact.update({
+          prisma.companyContact.upsert({
             where: { companyId: Number(id) },
-            data: data.contact,
+            update: data.contact,
+            create: {
+              ...data.contact,
+              companyId: Number(id),
+            },
           })
         );
       }
 
-      // Add profile update if profile data is provided
+      // Handle profile data - use upsert instead of update
       if (data.profile) {
         transactionQueries.push(
-          prisma.companyProfile.update({
+          prisma.companyProfile.upsert({
             where: { companyId: Number(id) },
-            data: data.profile,
+            update: data.profile,
+            create: {
+              ...data.profile,
+              companyId: Number(id),
+            },
           })
         );
       }
 
-      // Only execute transaction if there are queries to run
+      // Execute transaction if there are queries
       if (transactionQueries.length > 0) {
         await prisma.$transaction(transactionQueries);
       }
 
-      // Return the updated company with all relations
-      const company = await this.findById(id);
-      return company;
+      // Return the updated company
+      return await this.findById(id);
     } catch (error) {
       throw new Error(`Failed to update company: ${error.message}`);
     }

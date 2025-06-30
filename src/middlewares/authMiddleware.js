@@ -40,8 +40,6 @@ const authMiddleware = async (req, res, next) => {
       permissions: decoded.permissions,
     };
 
-    console.log(req.user);
-
     next();
   } catch (error) {
     if (error.name === "JsonWebTokenError") {

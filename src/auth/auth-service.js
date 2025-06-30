@@ -37,7 +37,7 @@ const login = async (email, password) => {
       };
     }
 
-    // 2. Check Regular Users (including Company Admins)
+    // 2. Check Regular Users (including Company Admins) with all related data
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
@@ -48,7 +48,23 @@ const login = async (email, password) => {
             },
           },
         },
-        company: true,
+        company: {
+          include: {
+            contact: true,
+            addresses: true,
+            media: true,
+            profile: true,
+          },
+        },
+        notifications: {
+          where: {
+            isRead: false,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 10,
+        },
       },
     });
 
@@ -84,16 +100,16 @@ const login = async (email, password) => {
         companyId: user.companyId,
         companyName: user.company?.name,
         permissions,
+        unreadNotifications: user.notifications,
+        companyDetails: {
+          ...user.company,
+          contact: user.company?.contact,
+          addresses: user.company?.addresses,
+          media: user.company?.media,
+          profile: user.company?.profile,
+        },
       },
     };
-
-    // 7. Special Handling for Company Admins
-    if (user.role.name === "company_admin") {
-      responseData.user.companyDetails = {
-        id: user.companyId,
-        name: user.company?.name,
-      };
-    }
 
     return {
       success: true,
